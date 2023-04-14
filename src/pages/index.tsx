@@ -55,10 +55,10 @@ const Home: NextPage = () => (
         </a>
 
         <a className={styles.card} target="_blank" rel="noopener noreferrer">
-          <h2>🚫 Hault Protocol</h2>
+          <h2>🔔 Push Alert</h2>
           <p>
-            If you need to hault the protocol, you can do so here. This will prevent any new
-            deposits and withdrawls.
+            If you need to push an alert to the community, you can do so here. This will send a
+            message alerting the community that the rate limit has been breached.
           </p>
         </a>
       </div>
