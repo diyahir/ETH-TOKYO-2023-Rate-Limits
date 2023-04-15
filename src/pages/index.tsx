@@ -59,9 +59,9 @@ const Home: NextPage = () => {
         </HStack>
 
         <div></div>
-        <VStack>
+        <VStack width={'100%'}>
           <RateLimitIndicator />
-          <HStack>
+          <HStack display={'flex'} width={'100%'} justifyContent={'space-between'}>
             <RateLimitChart />
             <TokenTable />
           </HStack>

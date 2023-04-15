@@ -13,7 +13,7 @@ import {
 
 export function TokenTable() {
   return (
-    <TableContainer alignSelf={'start'}>
+    <TableContainer width={'100%'} alignSelf={'start'}>
       <Table variant="simple">
         <Thead>
           <Tr>
@@ -26,17 +26,17 @@ export function TokenTable() {
           <Tr>
             <Td> ETH</Td>
             <Td>100M</Td>
-            <Td isNumeric>25.4</Td>
+            <Td isNumeric>25.4M</Td>
           </Tr>
           <Tr>
             <Td>USDT</Td>
             <Td>90M</Td>
-            <Td isNumeric>30.48</Td>
+            <Td isNumeric>30.48M</Td>
           </Tr>
           <Tr>
             <Td>UNI</Td>
             <Td>10M</Td>
-            <Td isNumeric>0.91444</Td>
+            <Td isNumeric>0.91444M</Td>
           </Tr>
         </Tbody>
       </Table>

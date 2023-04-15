@@ -35,11 +35,13 @@ const RateLimitChart = () => {
     },
     {
       name: '9pm',
+      rateLimit: 2890,
       TVL: 4800,
       amt: 2181
     },
     {
       name: '10pm',
+      rateLimit: 2890,
       TVL: 3800,
       amt: 2500
     },
@@ -58,7 +60,7 @@ const RateLimitChart = () => {
 
   return (
     <LineChart
-      width={500}
+      width={700}
       height={300}
       data={data}
       margin={{
