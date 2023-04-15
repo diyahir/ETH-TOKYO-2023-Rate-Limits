@@ -72,13 +72,14 @@ const RateLimitChart = () => {
       <YAxis />
       <Tooltip />
       <Legend />
-      <Line type="monotone" dataKey="TVL" stroke="#8884d8" activeDot={{ r: 8 }} />
+      <Line type="monotone" dataKey="TVL" stroke="#8884d8" activeDot={{ r: 8 }} dot={false} />
       <Line
         name="Rate Limit"
         type="monotone"
         dataKey="rateLimit"
         stroke="red"
         display={'Rate Limit'}
+        dot={false}
       />
     </LineChart>
   );

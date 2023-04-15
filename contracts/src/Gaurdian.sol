@@ -5,6 +5,7 @@ import './IGaurdian.sol';
 
 contract Guardian is IGaurdian {
   address public admin;
+  bool public isRateLimited;
   uint public timeout;
   uint public maxDrawdownPercentage;
   uint public rateDuration;
@@ -57,6 +58,8 @@ contract Guardian is IGaurdian {
     Token storage token = tokens[_tokenAddress];
     require(token.exists, 'Token does not exist');
     require(_amount <= token.lockedAmount, 'Insufficient available amount');
+    require(!isRateLimited, 'Rate limit exceeded');
+
 
 
     // TODO

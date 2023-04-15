@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Text } from '@chakra-ui/react';
 
 function RateLimitIndicator({ limitReachedColor = 'red', limitNotReachedColor = 'green' }) {
   const [isLimitReached, setIsLimitReached] = useState(false);
@@ -13,11 +14,12 @@ function RateLimitIndicator({ limitReachedColor = 'red', limitNotReachedColor = 
           backgroundColor: dotColor,
           width: '10px',
           height: '10px',
+          // pulsing
 
           borderRadius: '50%',
           marginRight: '5px'
         }}></div>
-      <span>{statusText}</span>
+      <Text fontSize={'20px'}>Status: {statusText} - TVL: 251.1M</Text>
     </div>
   );
 }

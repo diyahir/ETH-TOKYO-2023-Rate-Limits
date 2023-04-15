@@ -7,6 +7,8 @@ import styles from 'styles/Home.module.scss';
 import dynamic from 'next/dynamic';
 import RateLimitChart from 'components/Button/RateLimitChart';
 import RateLimitIndicator from 'components/RateLimitStatus';
+import { HStack, Img, Text, VStack } from '@chakra-ui/react';
+import ActionGrid from 'components/ActionGrid';
 
 const ConnectButton = dynamic(() => import('../components/Button/ConnectButton'), {
   ssr: false
@@ -29,39 +31,14 @@ const Home: NextPage = () => (
       </div>
 
       <div></div>
-      <div className={styles.center}>
-        <h1 className="mx-2 text-3xl font-semibold">
-          {' '}
+      <VStack>
+        <HStack>
           <RateLimitIndicator />
-          <br />
-          TVL 250.3M{' '}
-        </h1>
+        </HStack>
         <RateLimitChart />
-      </div>
+      </VStack>
 
-      <div className={styles.grid}>
-        <a className={styles.card} target="_blank" rel="noopener noreferrer">
-          <h2>🌱 Override Rate Limit</h2>
-          <p>If this was a false positive, you can override the rate limit and allow withdrawls.</p>
-        </a>
-        <a className={styles.card} target="_blank" rel="noopener noreferrer">
-          <h2>⚡ Extend Timeout</h2>
-          <p>If you need more time to assess the situation, you can extend the timeout period.</p>
-        </a>
-
-        <a className={styles.card} target="_blank" rel="noopener noreferrer">
-          <h2>📦 Migrate Contract</h2>
-          <p>If you need to migrate the contract, you can do so here.</p>
-        </a>
-
-        <a className={styles.card} target="_blank" rel="noopener noreferrer">
-          <h2>🔔 Push Alert</h2>
-          <p>
-            If you need to push an alert to the community, you can do so here. This will send a
-            message alerting the community that the rate limit has been breached.
-          </p>
-        </a>
-      </div>
+      <ActionGrid />
     </main>
   </>
 );
