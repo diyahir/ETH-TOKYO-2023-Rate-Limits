@@ -10,7 +10,7 @@ const useFaucet = (): any => {
   const [isLoading, setIsLoading] = useState(false);
   const { data: signer } = useSigner();
   const contract = useContract({
-    addressOrName: '0xD22a7ECF2e09dDa61a114751794bC1e3B8dBaa4f',
+    address: '0xD22a7ECF2e09dDa61a114751794bC1e3B8dBaa4f',
     contractInterface: FAUCET_ABI,
     signerOrProvider: signer
   });

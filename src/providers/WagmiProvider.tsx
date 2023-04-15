@@ -20,6 +20,11 @@ const WagmiProvider: React.FC<TProps> = ({ children }) => {
   // TODO: get supportedNetworks from config
   const supportedNetworks: INetwork[] = [
     {
+      chainId: 97,
+      name: 'Binance Smart Chain Testnet',
+      explorerUrl: 'https://testnet.bscscan.com'
+    },
+    {
       chainId: 1,
       name: 'Ethereum Mainnet',
       explorerUrl: 'https://etherscan.io'
