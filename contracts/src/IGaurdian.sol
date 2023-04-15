@@ -9,8 +9,6 @@ interface IGaurdian {
     function withdrawLockedFunds() external;
 
     // Admin Functions 
-    function initialize(address _admin, uint _timeout, uint _maxDrawdownPercentage) external;
-
     function registerToken(address _tokenAddress, uint256 _bootsrapAmount) external;
 
     function overrideLimit() external;
