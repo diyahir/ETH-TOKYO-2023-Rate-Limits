@@ -29,77 +29,81 @@ contract Guardian {
   // recipient => token => amount
   mapping(address => mapping(address => uint256)) public lockedFunds;
 
-  constructor(address _admin, address[] _guardedContracts) {
+  constructor(address _admin, address[] memory _guardedContracts) {
     admin = _admin;
     guardedContracts = _guardedContracts;
   }
 
-  function recordInflowAndWithdrawAvailable(){
-
+  // give guarded contracts one function to call for convenience
+  function recordInflowAndWithdrawAvailable(address _tokenAddress, uint256 _amount, address _recipient) external onlyGuarded {
+    recordInflow(_tokenAddress, _amount, _recipient);
+    withdraw(_tokenAddress, _amount, _recipient);
   }
 
-
-  function recordInflow(address _tokenAddress, uint256 _amount) external onlyGuarded {
+  function recordInflow(address _tokenAddress, uint256 _amount, address _recipient) external onlyGuarded {
     Token storage token = tokens[_tokenAddress];
     require(token.exists, 'Token does not exist');
 
     // credit amount to user, credit total amount
+    token.totalAmount += _amount;
+    lockedFunds[_recipient][_tokenAddress] += _amount;
 
-
+    //create a new inflow
+    Inflow memory newInflow;
+    newInflow.amount =_amount;
+    newInflow.timestamp = block.timestamp;
+    inflows[_tokenAddress].push(newInflow);
 
   }
-/*
-  function recordInflow(address _tokenAddress, uint256 _amount) external {
-    Token storage token = tokens[_tokenAddress];
-    require(token.exists, 'Token does not exist');
-    inflows[_tokenAddress].push(Inflow(_amount, block.timestamp));
-    // Remove old inflows
-    uint256 oldestTimestamp = block.timestamp - rateDuration;
-    uint256 oldInflows = 0;
-    uint256 i = 0;
-    while (inflows[_tokenAddress][i].timestamp < oldestTimestamp) {
-      oldInflows += inflows[_tokenAddress][i].amount;
-      i++;
-    }
-    if (i > 0) {
-      // There's probably a better way to do this
-      inflows[_tokenAddress].pop();
-    }
-  
-    token.lockedAmount += _amount - oldInflows;
-  }
-  */
 
-  function getMaxWithdrawal(address _tokenAddress, uint256 _amount, address _recipient) pure {
-
+  function getMaxWithdrawal(address _tokenAddress, uint256 _amount, address _recipient) public view returns (uint256) {
+      //later make a view function so users can estimate how much they will get
   }
 
   function withdraw(address _tokenAddress, uint256 _amount, address _recipient) external{
-    
-    address recipient;
-
-    if (!_recipient){
-      recipient = msg.sender;
-    } else {
-      recipient = _recipient;
-    }
 
     Token storage token = tokens[_tokenAddress];
+    
+    require(_recipient != address(0), 'need to include recipient');
     require(token.exists, 'Token does not exist');
-    require(token.lockedAmount > 0, 'No locked funds to withdraw');
-    require(_amount <= token.lockedAmount, 'Insufficient available amount');
+    require(token.totalAmount > 0, 'No locked funds to withdraw');
+    require(_amount <= token.totalAmount, 'Insufficient available amount');
+
+    // go through inflows and remove them from the array, also decrease the amountWithdrawnSincePeriod
+
+    Inflow storage inflowArr = inflows[_tokenAddress];
+    for (uint i=0; i<inflowArr.length; i++){
+      if (block.timestamp - inflowArr[i].timestamp > token.withdrawalPeriod){
+        token.amountWithdrawnSincePeriod -= inflowArr[i].amount;
+        inflowArr[i] = inflowArr[inflowArr.length-1];
+        inflowArr.pop();
+      }
+    }
+
+    uint256 userLockedAmount = lockedFunds[_recipient][_tokenAddress];
 
     // now we need to actually check how many tokens the user can withdraw
-    // essentially we need to find out how far we are from max drawdown percentage per period, per token
+    // essentially we need to find out how far we are from max drawdown per period, per token
+    uint256 maxDrawdownAmount = token.amountWithdrawnSincePeriod - token.withdrawalLimitPerPeriod;
+    
+    uint256 userWithdrawAmount;
 
-
-    // go through inflows and remove them from the array, also decrement the amountWithdrawnSincePeriod
-
-    //
+    if (maxDrawdownAmount > _amount){
+      userWithdrawAmount = _amount;
+    } else if (_amount - maxDrawdownAmount > 0) {
+      userWithdrawAmount = maxDrawdownAmount;
+    } else {
+      //this shouldn't happen but better be sure
+      revert();
+    }
+    
+    //finally we should decrease the users balance and the total balance, and increase the amount withdrawn since period
+    lockedFunds[_recipient][_tokenAddress] -= userWithdrawAmount;
+    token.totalAmount -= userWithdrawAmount;
+    token.amountWithdrawnSincePeriod += userWithdrawAmount;
 
     IERC20 erc20Token = IERC20(_tokenAddress);
-    token.lockedAmount -= _amount;
-    erc20Token.transfer(recipient, _amount);
+    erc20Token.transfer(_recipient, userWithdrawAmount);
   }
 
   function transferAdmin(address _admin) external {
@@ -112,7 +116,23 @@ contract Guardian {
     guardedContracts = _guardedContracts;
   } 
 
-  function registerToken(address _tokenAddress, uint256 withdrawalLimitPerPeriod, withdrawalPeriod) external {
+  function containsGuardian(address _input) internal view returns(bool){
+    bool found = false;
+    for (uint i=0; i<guardedContracts.length; i++){
+      if (guardedContracts[i] == _input){
+        found = true;
+        break;
+      }
+    }
+    return found;
+  }
+
+  modifier onlyGuarded() {
+     require(containsGuardian(msg.sender), 'Only guarded contracts');
+     _;
+  }
+
+  function registerToken(address _tokenAddress, uint256 withdrawalLimitPerPeriod, uint256 withdrawalPeriod) external {
     require(msg.sender == admin, 'Only the current admin can register a new token');
     Token storage token = tokens[_tokenAddress];
     require(!token.exists, 'Token already exists');
