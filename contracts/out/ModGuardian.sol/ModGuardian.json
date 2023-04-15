@@ -1,0 +1,292 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "check",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x60806040526000805534801561001457600080fd5b5060bb806100236000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c8063919840ad14602d575b600080fd5b60336045565b60405190815260200160405180910390f35b600080548180605283605f565b9190505550600054905090565b600060018201607e57634e487b7160e01b600052601160045260246000fd5b506001019056fea2646970667358221220294d99516bacc0a4abb14ff4a6163f83a811a1e31c11ac963707d26d2d1d36b464736f6c634300080e0033",
+    "sourceMap": "26:140:19:-:0;;;68:1;54:15;;26:140;;;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x6080604052348015600f57600080fd5b506004361060285760003560e01c8063919840ad14602d575b600080fd5b60336045565b60405190815260200160405180910390f35b600080548180605283605f565b9190505550600054905090565b600060018201607e57634e487b7160e01b600052601160045260246000fd5b506001019056fea2646970667358221220294d99516bacc0a4abb14ff4a6163f83a811a1e31c11ac963707d26d2d1d36b464736f6c634300080e0033",
+    "sourceMap": "26:140:19:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;76:88;;;:::i;:::-;;;160:25:23;;;148:2;133:18;76:88:19;;;;;;;;108:4;124:9;;108:4;;124:9;;;:::i;:::-;;;;;;150:7;;143:14;;76:88;:::o;196:232:23:-;235:3;256:17;;;253:140;;315:10;310:3;306:20;303:1;296:31;350:4;347:1;340:15;378:4;375:1;368:15;253:140;-1:-1:-1;420:1:23;409:13;;196:232::o",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "check()": "919840ad"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.14+commit.80d49f37\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"check\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/ModGuardian.sol\":\"ModGuardian\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":ds-test/=lib/forge-std/lib/ds-test/src/\",\":forge-std/=lib/forge-std/src/\"]},\"sources\":{\"src/ModGuardian.sol\":{\"keccak256\":\"0x9ef780d9a721eacc49a2cd28309fb82160cc08a96d6fce7972a7434242676bec\",\"urls\":[\"bzz-raw://2c383d4d8f574aec46b214f8f43a3bbfef99e1dffc55561227f0ed2ebaa5716b\",\"dweb:/ipfs/Qmd7kX87ZoboxemyvhDUBBYm5n54RH7HMHQUkMTUkaKqbW\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.14+commit.80d49f37"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "check",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        ":ds-test/=lib/forge-std/lib/ds-test/src/",
+        ":forge-std/=lib/forge-std/src/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "ipfs"
+      },
+      "compilationTarget": {
+        "src/ModGuardian.sol": "ModGuardian"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "src/ModGuardian.sol": {
+        "keccak256": "0x9ef780d9a721eacc49a2cd28309fb82160cc08a96d6fce7972a7434242676bec",
+        "urls": [
+          "bzz-raw://2c383d4d8f574aec46b214f8f43a3bbfef99e1dffc55561227f0ed2ebaa5716b",
+          "dweb:/ipfs/Qmd7kX87ZoboxemyvhDUBBYm5n54RH7HMHQUkMTUkaKqbW"
+        ],
+        "license": null
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "src/ModGuardian.sol",
+    "id": 29402,
+    "exportedSymbols": {
+      "ModGuardian": [
+        29401
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "0:424:19",
+    "nodes": [
+      {
+        "id": 29386,
+        "nodeType": "PragmaDirective",
+        "src": "0:24:19",
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".13"
+        ]
+      },
+      {
+        "id": 29401,
+        "nodeType": "ContractDefinition",
+        "src": "26:140:19",
+        "nodes": [
+          {
+            "id": 29389,
+            "nodeType": "VariableDeclaration",
+            "src": "54:15:19",
+            "constant": false,
+            "mutability": "mutable",
+            "name": "counter",
+            "nameLocation": "59:7:19",
+            "scope": 29401,
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_uint256",
+              "typeString": "uint256"
+            },
+            "typeName": {
+              "id": 29387,
+              "name": "uint",
+              "nodeType": "ElementaryTypeName",
+              "src": "54:4:19",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            "value": {
+              "hexValue": "30",
+              "id": 29388,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "number",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "68:1:19",
+              "typeDescriptions": {
+                "typeIdentifier": "t_rational_0_by_1",
+                "typeString": "int_const 0"
+              },
+              "value": "0"
+            },
+            "visibility": "internal"
+          },
+          {
+            "id": 29400,
+            "nodeType": "FunctionDefinition",
+            "src": "76:88:19",
+            "body": {
+              "id": 29399,
+              "nodeType": "Block",
+              "src": "114:50:19",
+              "statements": [
+                {
+                  "expression": {
+                    "id": 29395,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "UnaryOperation",
+                    "operator": "++",
+                    "prefix": false,
+                    "src": "124:9:19",
+                    "subExpression": {
+                      "id": 29394,
+                      "name": "counter",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 29389,
+                      "src": "124:7:19",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 29396,
+                  "nodeType": "ExpressionStatement",
+                  "src": "124:9:19"
+                },
+                {
+                  "expression": {
+                    "id": 29397,
+                    "name": "counter",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 29389,
+                    "src": "150:7:19",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "functionReturnParameters": 29393,
+                  "id": 29398,
+                  "nodeType": "Return",
+                  "src": "143:14:19"
+                }
+              ]
+            },
+            "functionSelector": "919840ad",
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "check",
+            "nameLocation": "85:5:19",
+            "parameters": {
+              "id": 29390,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "90:2:19"
+            },
+            "returnParameters": {
+              "id": 29393,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 29392,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 29400,
+                  "src": "108:4:19",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 29391,
+                    "name": "uint",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "108:4:19",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "107:6:19"
+            },
+            "scope": 29401,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "public"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "ModGuardian",
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          29401
+        ],
+        "name": "ModGuardian",
+        "nameLocation": "35:11:19",
+        "scope": 29402,
+        "usedErrors": []
+      }
+    ]
+  },
+  "id": 19
+}
