@@ -19,7 +19,7 @@ function RateLimitIndicator({ limitReachedColor = 'red', limitNotReachedColor = 
           borderRadius: '50%',
           marginRight: '5px'
         }}></div>
-      <Text fontSize={'20px'}>Status: {statusText} - TVL: 251.1M</Text>
+      <Text fontSize={'20px'}>Status: {statusText} </Text>
     </div>
   );
 }

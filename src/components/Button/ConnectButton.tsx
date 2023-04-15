@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-shadow */
+import { Button, VStack, Text } from '@chakra-ui/react';
 import { useAccount, useConnect, useDisconnect, useEnsAvatar, useEnsName } from 'wagmi';
 
 const ConnectButton = () => {
@@ -11,13 +12,7 @@ const ConnectButton = () => {
 
   if (isConnected) {
     return (
-      <div>
-        <div>{ensName ? `${ensName} (${address})` : address}</div>
-        <div>Connected to {connector?.name}</div>
-        <button type="button" onClick={() => disconnect()}>
-          Disconnect
-        </button>
-      </div>
+      <Button onClick={() => disconnect()}>{ensName ? `${ensName}` : address} - Disconnect</Button>
     );
   }
 

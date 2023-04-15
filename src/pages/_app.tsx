@@ -10,8 +10,10 @@ const MyApp = ({ Component, pageProps }: AppProps) => {
     useSystemColorMode: false
   };
 
+  const theme = extendTheme({ config });
+
   return (
-    <ChakraProvider theme={config}>
+    <ChakraProvider theme={theme}>
       <WagmiProvider>
         <Component {...pageProps} />
       </WagmiProvider>
