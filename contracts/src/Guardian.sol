@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-contracts/token/ERC20/IERC20.sol";
+
+interface IPUSHCommInterface {
+    function sendNotification(address _channel, address _recipient, bytes calldata _identity) external;
+}
 
 contract Guardian {
   address public admin;
@@ -34,12 +38,6 @@ contract Guardian {
     guardedContracts = _guardedContracts;
   }
 
-  // give guarded contracts one function to call for convenience
-  function recordInflowAndWithdrawAvailable(address _tokenAddress, uint256 _amount, address _recipient) external onlyGuarded {
-    recordInflow(_tokenAddress, _amount, _recipient);
-    withdraw(_tokenAddress, _amount, _recipient);
-  }
-
   function recordInflow(address _tokenAddress, uint256 _amount, address _recipient) external onlyGuarded {
     Token storage token = tokens[_tokenAddress];
     require(token.exists, 'Token does not exist');
@@ -70,7 +68,7 @@ contract Guardian {
 
     // go through inflows and remove them from the array, also decrease the amountWithdrawnSincePeriod
 
-    Inflow storage inflowArr = inflows[_tokenAddress];
+    Inflow[] storage inflowArr = inflows[_tokenAddress];
     for (uint i=0; i<inflowArr.length; i++){
       if (block.timestamp - inflowArr[i].timestamp > token.withdrawalPeriod){
         token.amountWithdrawnSincePeriod -= inflowArr[i].amount;
@@ -80,6 +78,7 @@ contract Guardian {
     }
 
     uint256 userLockedAmount = lockedFunds[_recipient][_tokenAddress];
+    require(userLockedAmount >= _amount, "you don't have enough balance to withdraw");
 
     // now we need to actually check how many tokens the user can withdraw
     // essentially we need to find out how far we are from max drawdown per period, per token
@@ -110,7 +109,7 @@ contract Guardian {
     admin = _admin;
   }
 
-  function modifyGuardedContracts(address[] _guardedContracts){
+  function modifyGuardedContracts(address[] calldata _guardedContracts) public {
     require(msg.sender == admin, 'Only admin');
     guardedContracts = _guardedContracts;
   } 
@@ -147,8 +146,30 @@ contract Guardian {
     token.withdrawalPeriod = _withdrawalPeriod;
   }
 
-  function pushAlert() external {
+  function pushAlert(address _user) external {
     // Push an alert to an external system
+    IPUSHCommInterface pushContract = IPUSHCommInterface(0x87da9Af1899ad477C67FeA31ce89c1d2435c77DC);
+    pushContract.sendNotification(0x86D42386c4fC038E0bF4EdB457B2CAA96B1195Ed, _user, bytes(
+        string(
+            // We are passing identity here: https://docs.epns.io/developers/developer-guides/sending-notifications/advanced/notification-payload-types/identity/payload-identity-implementations
+            abi.encodePacked(
+                "0", // this is notification identity: https://docs.epns.io/developers/developer-guides/sending-notifications/advanced/notification-payload-types/identity/payload-identity-implementations
+                "+", // segregator
+                "3", // this is payload type: https://docs.epns.io/developers/developer-guides/sending-notifications/advanced/notification-payload-types/payload (1, 3 or 4) = (Broadcast, targetted or subset)
+                "+", // segregator
+                "Withdrawal noticed", // this is notificaiton title
+                "+", // segregator
+                "Please chck the DeFi Guardian dashboard to view the state of your protocol" // notification body
+            )
+        )
+    ));
+
+  }
+
+  // give guarded contracts one function to call for convenience
+  function recordInflowAndWithdrawAvailable(address _tokenAddress, uint256 _amount, address _recipient) external onlyGuarded {
+    this.recordInflow(_tokenAddress, _amount, _recipient);
+    this.withdraw(_tokenAddress, _amount, _recipient);
   }
 
 }
