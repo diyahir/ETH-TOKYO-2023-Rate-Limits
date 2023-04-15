@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-shadow */
-import { Button, VStack, Text } from '@chakra-ui/react';
+import { Button, VStack, Text, ButtonGroup } from '@chakra-ui/react';
 import { useAccount, useConnect, useDisconnect, useEnsAvatar, useEnsName } from 'wagmi';
 
 const ConnectButton = () => {
@@ -17,11 +17,11 @@ const ConnectButton = () => {
   }
 
   return (
-    <div>
+    <ButtonGroup>
       {connectors.map((connector) => {
         if (!connector) return null;
         return (
-          <button
+          <Button
             type="button"
             disabled={!connector.ready}
             key={connector.id}
@@ -29,12 +29,12 @@ const ConnectButton = () => {
             {connector.name}
             {!connector.ready && ' (unsupported)'}
             {isLoading && connector.id === pendingConnector?.id && ' (connecting)'}
-          </button>
+          </Button>
         );
       })}
 
       {error && <div>{error.message}</div>}
-    </div>
+    </ButtonGroup>
   );
 };
 
