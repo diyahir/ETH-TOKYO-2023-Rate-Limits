@@ -53,7 +53,6 @@ contract Guardian {
     newInflow.amount =_amount;
     newInflow.timestamp = block.timestamp;
     inflows[_tokenAddress].push(newInflow);
-
   }
 
   function getMaxWithdrawal(address _tokenAddress, uint256 _amount, address _recipient) public view returns (uint256) {
@@ -132,16 +131,20 @@ contract Guardian {
      _;
   }
 
-  function registerToken(address _tokenAddress, uint256 withdrawalLimitPerPeriod, uint256 withdrawalPeriod) external {
+  function registerToken(address _tokenAddress, uint256 _withdrawalLimitPerPeriod, uint256 _withdrawalPeriod) external {
     require(msg.sender == admin, 'Only the current admin can register a new token');
     Token storage token = tokens[_tokenAddress];
     require(!token.exists, 'Token already exists');
     token.exists = true;
+    token.withdrawalLimitPerPeriod = _withdrawalLimitPerPeriod;
+    token.withdrawalPeriod = _withdrawalPeriod;
   }
 
-  function overrideLimit(address _tokenAddress) external {
+  function overrideLimit(address _tokenAddress, uint256 _withdrawalLimitPerPeriod, uint256 _withdrawalPeriod) external {
     require(msg.sender == admin, 'Only the current admin can override the withdrawal limit');
-    //reimplement this
+    Token storage token = tokens[_tokenAddress];
+    token.withdrawalLimitPerPeriod = _withdrawalLimitPerPeriod;
+    token.withdrawalPeriod = _withdrawalPeriod;
   }
 
   function pushAlert() external {
