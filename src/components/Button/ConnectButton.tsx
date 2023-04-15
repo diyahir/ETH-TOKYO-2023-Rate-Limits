@@ -1,24 +1,44 @@
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-shadow */
 import { Button, VStack, Text, ButtonGroup, Select } from '@chakra-ui/react';
-import { useAccount, useConnect, useDisconnect, useEnsAvatar, useEnsName } from 'wagmi';
+import { useEffect, useState } from 'react';
+import { useAccount, useBalance, useConnect, useDisconnect, useEnsAvatar, useEnsName } from 'wagmi';
 
 const ConnectButton = () => {
   const { address, connector, isConnected } = useAccount();
+
   const { data: ensAvatar } = useEnsAvatar({ address });
   const { data: ensName } = useEnsName({ address });
   const { connect, connectors, error, isLoading, pendingConnector } = useConnect();
   const { disconnect } = useDisconnect();
+  const [chainId, setChainId] = useState(10200);
 
   if (isConnected) {
     return (
       <ButtonGroup>
         <Select placeholder="Switch Network">
-          <option onClick={() => connect({ connector, chainId: 1 })} value="option1">
+          <option
+            onChange={(e) => {
+              console.log('e', e);
+              setChainId(1);
+            }}
+            onClick={() => {
+              setChainId(1);
+            }}
+            value="option1">
             Mainnet
           </option>
-          <option onClick={() => connect({ connector, chainId: 97 })} value="option2">
+          <option
+            onChange={(e) => {
+              console.log('e', e);
+              setChainId(97);
+            }}
+            onClick={() => setChainId(97)}
+            value="option2">
             BSC Testnet
+          </option>
+          <option onClick={() => setChainId(100)} value="option2">
+            Gnosis Chain
           </option>
         </Select>
         <Button minW={'fit-content'} onClick={() => disconnect()}>
@@ -38,7 +58,7 @@ const ConnectButton = () => {
               type="button"
               disabled={!connector.ready}
               key={connector.id}
-              onClick={() => connect({ connector, chainId: 1 })}>
+              onClick={() => connect({ connector, chainId: chainId })}>
               {connector.name}
               {!connector.ready && ' (unsupported)'}
               {isLoading && connector.id === pendingConnector?.id && ' (connecting)'}

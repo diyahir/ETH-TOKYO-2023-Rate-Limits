@@ -47,7 +47,7 @@ const Home: NextPage = () => {
       <main className={styles.main}>
         <HStack width={'100%'} justifyContent={'space-between'}>
           <p>
-            <code className={styles.code}>Protocol Rate Limit Guardian</code>
+            <code className={styles.code}>Protocol Rate Limit Gaurdian</code>
           </p>
           <ConnectButton />
         </HStack>

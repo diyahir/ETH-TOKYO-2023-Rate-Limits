@@ -28,6 +28,16 @@ const WagmiProvider: React.FC<TProps> = ({ children }) => {
       chainId: 1,
       name: 'Ethereum Mainnet',
       explorerUrl: 'https://etherscan.io'
+    },
+    {
+      chainId: 100,
+      name: 'Gnosis Chain',
+      explorerUrl: 'https://gnosis-safe.io'
+    },
+    {
+      chainId: 10200,
+      name: 'Gnosis Chain Testnet',
+      explorerUrl: 'https://gnosis-safe.io'
     }
   ];
   const supportedChainIds = supportedNetworks?.map((i: INetwork) => i.chainId);

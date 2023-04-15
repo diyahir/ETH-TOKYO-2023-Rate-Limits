@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import './IGaurdian.sol';
 
-contract Guardian is IGaurdian {
+contract Gaurdian is IGaurdian {
   address public admin;
   bool public isRateLimited;
   uint public timeout;
@@ -75,13 +75,6 @@ contract Guardian is IGaurdian {
     token.lockedAmount = 0;
     (bool success, ) = msg.sender.call{ value: amount }('');
     require(success, 'Transfer failed');
-  }
-
-  function initialize(address _admin, uint _timeout, uint _maxDrawdownPercentage) external {
-    require(msg.sender == admin, 'Only the current admin can initialize the contract');
-    admin = _admin;
-    timeout = _timeout;
-    maxDrawdownPercentage = _maxDrawdownPercentage;
   }
 
   function registerToken(address _tokenAddress, uint256 _bootstrapAmount) external {
