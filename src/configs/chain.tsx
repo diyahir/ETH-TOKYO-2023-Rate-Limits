@@ -39,7 +39,7 @@ export const DEFAULT_CHAIN_RPC_LINK: { [key: number]: string } = {
   [SupportedChainId.BSC_TESTNET]: ''
 };
 
-export const SUPPORTED_CHAINS = [wagmiChains.mainnet, wagmiChains.goerli];
+export const SUPPORTED_CHAINS = [wagmiChains.mainnet, wagmiChains.goerli, wagmiChains.bscTestnet];
 
 export const getWalletIcon = (id: LoginTypeEnum | null, className?: string) => {
   const mergedClassName = cn('h-7 w-7 mobile:h-6 mobile:w-6', className);
