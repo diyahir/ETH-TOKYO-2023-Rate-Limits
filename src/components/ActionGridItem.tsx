@@ -44,9 +44,10 @@ function ActionGridItem({ title, subTitle }: Props) {
       <Card borderColor={'gray.800'} borderWidth={2} borderRadius={15} display={'flex'} h={'100%'}>
         <CardBody>
           <Button
+            fontWeight={'bold'}
+            fontFamily={'IBM Plex Mono'}
             // isDisabled={true}
             width={'100%'}
-            fontWeight={'bold'}
             mb={6}
             onClick={() => {
               write?.();
@@ -63,7 +64,9 @@ function ActionGridItem({ title, subTitle }: Props) {
               />
             </Container>
           )} */}
-          <p>{subTitle}</p>
+          <Text fontWeight={'bold'} fontFamily={'IBM Plex Mono'}>
+            {subTitle}
+          </Text>
         </CardBody>
       </Card>
     </GridItem>

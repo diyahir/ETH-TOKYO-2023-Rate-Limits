@@ -19,7 +19,9 @@ function RateLimitIndicator({ limitReachedColor = 'red', limitNotReachedColor = 
           borderRadius: '50%',
           marginRight: '5px'
         }}></div>
-      <Text fontSize={'20px'}>Status: {statusText} </Text>
+      <Text fontFamily={'IBM Plex Mono'} fontSize={'20px'} fontWeight={'bold'}>
+        Status: {statusText}{' '}
+      </Text>
     </div>
   );
 }
