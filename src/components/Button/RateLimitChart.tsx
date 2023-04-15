@@ -15,38 +15,38 @@ const RateLimitChart = () => {
   const data = [
     {
       name: '5pm',
-      tvl: 2400,
+      TVL: 2400,
       amt: 2400
     },
     {
       name: '6pm',
-      tvl: 1398,
+      TVL: 1398,
       amt: 2210
     },
     {
       name: '7pm',
-      tvl: 9800,
+      TVL: 9800,
       amt: 2290
     },
     {
       name: '8pm',
-      tvl: 3908,
+      TVL: 3908,
       amt: 2000
     },
     {
       name: '9pm',
-      tvl: 4800,
+      TVL: 4800,
       amt: 2181
     },
     {
       name: '10pm',
-      tvl: 3800,
+      TVL: 3800,
       amt: 2500
     },
     {
       name: '11pm',
       rateLimit: 2890,
-      tvl: 4300,
+      TVL: 4300,
       amt: 2100
     },
     {
@@ -72,8 +72,14 @@ const RateLimitChart = () => {
       <YAxis />
       <Tooltip />
       <Legend />
-      <Line type="monotone" dataKey="tvl" stroke="#8884d8" activeDot={{ r: 8 }} />
-      <Line type="monotone" dataKey="rateLimit" stroke="red" />
+      <Line type="monotone" dataKey="TVL" stroke="#8884d8" activeDot={{ r: 8 }} />
+      <Line
+        name="Rate Limit"
+        type="monotone"
+        dataKey="rateLimit"
+        stroke="red"
+        display={'Rate Limit'}
+      />
     </LineChart>
   );
 };
