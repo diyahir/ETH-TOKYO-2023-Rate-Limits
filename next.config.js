@@ -1,6 +1,7 @@
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true
-};
+  swcMinify: true,
+  transpilePackages: ['@lens-protocol']
+}
 
 module.exports = nextConfig;

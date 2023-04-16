@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardBody, Grid, GridItem, HStack, Img, Text } from '@chakra-ui/react';
 import ActionGridItem from './ActionGridItem';
 
+import { ShareToLens, Theme, Size, FollowOnLens } from '@lens-protocol/widgets-react';
+
 function ActionGrid({}) {
   return (
     <Grid mt={20} templateColumns={'repeat(4,1fr)'} gap={10}>
