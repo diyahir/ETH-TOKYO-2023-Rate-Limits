@@ -1,3 +1,12 @@
+# Run Webapp
+
+This will run locally at http://localhost:3000/
+```
+yarn
+yarn dev
+```
+
+
 # DeFi Guardian
 
 Deployments
@@ -32,3 +41,5 @@ Scroll testnet
 Deployer: 0x86D42386c4fC038E0bF4EdB457B2CAA96B1195Ed
 Deployed to: 0x7A5F80Ec128054D8D34f029b9C3B59cfc0d6229B
 Transaction hash: 0xf0412af9ad15e896aebda8a849e03a1cbefe00746159c0900c4513087652afd2
+
+
