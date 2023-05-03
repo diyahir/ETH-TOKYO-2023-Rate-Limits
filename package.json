@@ -1,47 +1,11 @@
 {
-  "name": "web",
+  "name": "defi-guardians",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "typechain": "typechain --out-dir src/config/abi/types --target=ethers-v5 \"src/config/abi/*.json\""
-  },
-  "dependencies": {
-    "@chakra-ui/react": "^2.5.5",
-    "@emotion/react": "^11.10.6",
-    "@emotion/styled": "^11.10.6",
-    "@lens-protocol/widgets-react": "^0.0.11",
-    "@typechain/ethers-v5": "^10.1.0",
-    "ethers": "^5.0.0",
-    "framer-motion": "^10.12.2",
-    "next": "^13.3.0",
-    "next-seo": "^5.15.0",
-    "next-sitemap": "^4.0.6",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "recharts": "^2.5.0",
-    "sass": "^1.57.1",
-    "typechain": "^8.1.0",
-    "wagmi": "^0.12.10",
-    "web3": "^1.7.1",
-    "web3-utils": "1.7.1",
-    "yup": "^0.32.11"
-  },
+  "scripts": {},
   "devDependencies": {
-    "@types/node": "18.7.13",
-    "@types/react": "18.0.17",
-    "@types/react-dom": "18.0.6",
-    "classnames": "^2.3.1",
-    "config": "*",
-    "eslint": "8.23.0",
-    "eslint-config-next": "12.2.5",
-    "lib": "*",
-    "tailwind-merge": "^1.8.0",
-    "tailwindcss": "^3.3.1",
-    "tsconfig": "*",
-    "typescript": "^4.9.5"
+    "prettier": "^2.5.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "solhint": "^3.3.6"
   }
 }
