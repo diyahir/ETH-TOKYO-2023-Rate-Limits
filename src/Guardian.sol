@@ -1,20 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "openzeppelin-contracts/token/ERC20/IERC20.sol";
-
-interface IPUSHCommInterface {
-    function sendNotification(
-        address _channel,
-        address _recipient,
-        bytes calldata _identity
-    ) external;
-}
+import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 contract Guardian {
-    address public admin;
-    address[] public guardedContracts;
-
     struct Token {
         uint256 totalAmount;
         uint256 amountWithdrawnSincePeriod;
@@ -37,9 +26,56 @@ contract Guardian {
     // recipient => token => amount
     mapping(address => mapping(address => uint256)) public lockedFunds;
 
+    address public admin;
+    address[] public guardedContracts;
+
+    modifier onlyGuarded() {
+        require(containsGuardian(msg.sender), "Only guarded contracts");
+        _;
+    }
+
     constructor(address _admin, address[] memory _guardedContracts) {
         admin = _admin;
         guardedContracts = _guardedContracts;
+    }
+
+    function registerToken(
+        address _tokenAddress,
+        uint256 _withdrawalLimitPerPeriod,
+        uint256 _withdrawalPeriod
+    ) external {
+        require(msg.sender == admin, "Only Admin");
+        Token storage token = tokens[_tokenAddress];
+        require(!token.exists, "Token already exists");
+        token.exists = true;
+        token.withdrawalLimitPerPeriod = _withdrawalLimitPerPeriod;
+        token.withdrawalPeriod = _withdrawalPeriod;
+    }
+
+    function overrideLimit(
+        address _tokenAddress,
+        uint256 _withdrawalLimitPerPeriod,
+        uint256 _withdrawalPeriod
+    ) external {
+        require(msg.sender == admin, "Only Admin");
+        Token storage token = tokens[_tokenAddress];
+        token.withdrawalLimitPerPeriod = _withdrawalLimitPerPeriod;
+        token.withdrawalPeriod = _withdrawalPeriod;
+    }
+
+    function transferAdmin(address _admin) external {
+        require(msg.sender == admin, "Only admin");
+        admin = _admin;
+    }
+
+    // give guarded contracts one function to call for convenience
+    function recordInflowAndWithdrawAvailable(
+        address _tokenAddress,
+        uint256 _amount,
+        address _recipient
+    ) external onlyGuarded {
+        this.recordInflow(_tokenAddress, _amount, _recipient);
+        this.withdraw(_tokenAddress, _amount, _recipient);
     }
 
     function recordInflow(
@@ -61,14 +97,6 @@ contract Guardian {
         inflows[_tokenAddress].push(newInflow);
     }
 
-    function getMaxWithdrawal(
-        address _tokenAddress,
-        uint256 _amount,
-        address _recipient
-    ) public view returns (uint256) {
-        //later make a view function so users can estimate how much they will get
-    }
-
     function withdraw(address _tokenAddress, uint256 _amount, address _recipient) external {
         Token storage token = tokens[_tokenAddress];
 
@@ -80,7 +108,7 @@ contract Guardian {
         // go through inflows and remove them from the array, also decrease the amountWithdrawnSincePeriod
 
         Inflow[] storage inflowArr = inflows[_tokenAddress];
-        for (uint i = 0; i < inflowArr.length; i++) {
+        for (uint256 i = 0; i < inflowArr.length; i++) {
             if (block.timestamp - inflowArr[i].timestamp > token.withdrawalPeriod) {
                 token.amountWithdrawnSincePeriod -= inflowArr[i].amount;
                 inflowArr[i] = inflowArr[inflowArr.length - 1];
@@ -89,7 +117,7 @@ contract Guardian {
         }
 
         uint256 userLockedAmount = lockedFunds[_recipient][_tokenAddress];
-        require(userLockedAmount >= _amount, "you don't have enough balance to withdraw");
+        require(userLockedAmount >= _amount, "Insufficient user balance");
 
         // now we need to actually check how many tokens the user can withdraw
         // essentially we need to find out how far we are from max drawdown per period, per token
@@ -104,7 +132,8 @@ contract Guardian {
             userWithdrawAmount = maxDrawdownAmount;
         } else {
             //this shouldn't happen but better be sure
-            revert();
+            /// TODO: Wouldn't this be when maxDrawnAmount == _amount?
+            revert("Something went wrong");
         }
 
         //finally we should decrease the users balance and the total balance, and increase the amount withdrawn since period
@@ -116,88 +145,27 @@ contract Guardian {
         erc20Token.transfer(_recipient, userWithdrawAmount);
     }
 
-    function transferAdmin(address _admin) external {
-        require(msg.sender == admin, "Only admin");
-        admin = _admin;
-    }
-
     function modifyGuardedContracts(address[] calldata _guardedContracts) public {
         require(msg.sender == admin, "Only admin");
         guardedContracts = _guardedContracts;
     }
 
+    function getMaxWithdrawal(
+        address _tokenAddress,
+        uint256 _amount,
+        address _recipient
+    ) public view returns (uint256) {
+        //later make a view function so users can estimate how much they will get
+    }
+
     function containsGuardian(address _input) internal view returns (bool) {
         bool found = false;
-        for (uint i = 0; i < guardedContracts.length; i++) {
+        for (uint256 i = 0; i < guardedContracts.length; i++) {
             if (guardedContracts[i] == _input) {
                 found = true;
                 break;
             }
         }
         return found;
-    }
-
-    modifier onlyGuarded() {
-        require(containsGuardian(msg.sender), "Only guarded contracts");
-        _;
-    }
-
-    function registerToken(
-        address _tokenAddress,
-        uint256 _withdrawalLimitPerPeriod,
-        uint256 _withdrawalPeriod
-    ) external {
-        require(msg.sender == admin, "Only the current admin can register a new token");
-        Token storage token = tokens[_tokenAddress];
-        require(!token.exists, "Token already exists");
-        token.exists = true;
-        token.withdrawalLimitPerPeriod = _withdrawalLimitPerPeriod;
-        token.withdrawalPeriod = _withdrawalPeriod;
-    }
-
-    function overrideLimit(
-        address _tokenAddress,
-        uint256 _withdrawalLimitPerPeriod,
-        uint256 _withdrawalPeriod
-    ) external {
-        require(msg.sender == admin, "Only the current admin can override the withdrawal limit");
-        Token storage token = tokens[_tokenAddress];
-        token.withdrawalLimitPerPeriod = _withdrawalLimitPerPeriod;
-        token.withdrawalPeriod = _withdrawalPeriod;
-    }
-
-    function pushAlert(address _user) external {
-        // Push an alert to an external system
-        IPUSHCommInterface pushContract = IPUSHCommInterface(
-            0x87da9Af1899ad477C67FeA31ce89c1d2435c77DC
-        );
-        pushContract.sendNotification(
-            0x86D42386c4fC038E0bF4EdB457B2CAA96B1195Ed,
-            _user,
-            bytes(
-                string(
-                    // We are passing identity here: https://docs.epns.io/developers/developer-guides/sending-notifications/advanced/notification-payload-types/identity/payload-identity-implementations
-                    abi.encodePacked(
-                        "0", // this is notification identity: https://docs.epns.io/developers/developer-guides/sending-notifications/advanced/notification-payload-types/identity/payload-identity-implementations
-                        "+", // segregator
-                        "3", // this is payload type: https://docs.epns.io/developers/developer-guides/sending-notifications/advanced/notification-payload-types/payload (1, 3 or 4) = (Broadcast, targetted or subset)
-                        "+", // segregator
-                        "Withdrawal noticed", // this is notificaiton title
-                        "+", // segregator
-                        "Please chck the DeFi Guardian dashboard to view the state of your protocol" // notification body
-                    )
-                )
-            )
-        );
-    }
-
-    // give guarded contracts one function to call for convenience
-    function recordInflowAndWithdrawAvailable(
-        address _tokenAddress,
-        uint256 _amount,
-        address _recipient
-    ) external onlyGuarded {
-        this.recordInflow(_tokenAddress, _amount, _recipient);
-        this.withdraw(_tokenAddress, _amount, _recipient);
     }
 }
