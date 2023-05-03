@@ -6,7 +6,6 @@ import "../src/PoolOne.sol";
 import "../src/PoolTwo.sol";
 
 contract ContractTest is Test {
-
     PoolOne myPoolOne;
     PoolTwo myPoolTwo;
 
@@ -16,9 +15,9 @@ contract ContractTest is Test {
     }
 
     function testExample() public {
-       uint res = myPoolOne.hi();
-       assertEq(res, 1);
-       uint resTwo = myPoolTwo.hi();
-       assertEq(resTwo, 1);
+        uint res = myPoolOne.hi();
+        assertEq(res, 1);
+        uint resTwo = myPoolTwo.hi();
+        assertEq(resTwo, 1);
     }
 }

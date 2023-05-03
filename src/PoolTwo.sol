@@ -3,8 +3,8 @@ pragma solidity ^0.8.13;
 import "./ModGuardian.sol";
 
 contract PoolTwo is ModGuardian {
-   function hi() public returns(uint){
-      // do withdraw here
-      return check();
-   }
+    function hi() public returns (uint) {
+        // do withdraw here
+        return check();
+    }
 }
