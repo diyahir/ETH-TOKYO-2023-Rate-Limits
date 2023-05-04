@@ -1,4 +1,9 @@
 .next/
-node_modules
+node_modules/
+out/
+cache/
+.vscode/
+
+.env
 .DS_Store
 *.DS_Store
