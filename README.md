@@ -2,7 +2,9 @@
 
 # Rate Limiter Smart Contract
 
-This is a rate limiter smart contract implemented in Solidity. The purpose of this contract is to prevent hacks or misuse of funds by enforcing withdrawal limits and withdrawal periods for specific tokens. The contract allows only authorized contracts to interact with it. 
+This is a rate limiter smart contract implemented in Solidity. The purpose of this contract is to prevent hacks or misuse of funds by enforcing withdrawal limits and withdrawal periods for specific tokens. The contract allows only authorized contracts to interact with it. We take an agnostic approach to the internals of what is happening within the DeFi application. 
+
+DeFi Gaurdian provides a walled garden for your users, an assurance that in the event of a hack, only the maximum rate limit percentage will be drained. 
 
 ![Defi Gaurdian](https://github.com/diyahir/ETH-TOKYO-2023-Rate-Limits/assets/32445955/e6c8a7a6-2b54-49a9-9fbe-f4468188ed3e)
 
