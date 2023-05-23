@@ -7,3 +7,5 @@ cache/
 .env
 .DS_Store
 *.DS_Store
+cache/solidity-files-cache.json
+cache/solidity-files-cache.json
