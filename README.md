@@ -6,7 +6,7 @@ This is a rate limiter smart contract implemented in Solidity. The purpose of th
 
 DeFi Gaurdian provides a walled garden for your users, an assurance that in the event of a hack, only the maximum rate limit percentage will be drained. 
 
-![Defi Gaurdian](https://github.com/diyahir/ETH-TOKYO-2023-Rate-Limits/assets/32445955/e6c8a7a6-2b54-49a9-9fbe-f4468188ed3e)
+![DeFi Guardian](https://github.com/diyahir/ETH-TOKYO-2023-Rate-Limits/assets/32445955/8de3f2f5-5085-4cd1-856c-688cc9084d06)
 
 
 # Testing 
