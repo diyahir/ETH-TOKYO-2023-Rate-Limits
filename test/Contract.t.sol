@@ -111,6 +111,7 @@ contract ContractTest is Test {
         assertEq(guardian.checkIfRateLimitBreeched(address(token)), false);
         assertEq(guardian.tokenLiquidityWindowAmount(address(token)), 40e18);
         assertEq(guardian.tokenLiquidityHistoracle(address(token)), 0);
+        assertEq(token.balanceOf(alice), 9960e18);
 
         // All the previous deposits are now out of the window and accounted for in the historacle
         vm.warp(10 hours);
@@ -126,7 +127,49 @@ contract ContractTest is Test {
         assertEq(tailNext, block.timestamp);
     }
 
-    function testBreach() public {}
+    function testBreach() public {
+        // 1 Million USDC deposited
+        token.mint(alice, 1_000_000e18);
+
+        vm.prank(alice);
+        token.approve(address(deFi), 1_000_000e18);
+
+        vm.prank(alice);
+        deFi.deposit(address(token), 1_000_000e18);
+
+        // HACK
+        // 300k USDC withdrawn
+        int256 withdrawalAmount = 300_001e18;
+        vm.warp(5 hours);
+        vm.prank(alice);
+        deFi.withdraw(address(token), uint(withdrawalAmount));
+        assertEq(guardian.checkIfRateLimitBreeched(address(token)), true);
+        assertEq(guardian.tokenLiquidityWindowAmount(address(token)), -withdrawalAmount);
+        assertEq(guardian.tokenLiquidityHistoracle(address(token)), 1_000_000e18);
+
+        assertEq(guardian.lockedFunds(address(alice), address(token)), uint(withdrawalAmount));
+        assertEq(token.balanceOf(alice), 0);
+        assertEq(token.balanceOf(address(guardian)), uint(withdrawalAmount));
+        assertEq(token.balanceOf(address(deFi)), 1_000_000e18 - uint(withdrawalAmount));
+
+        // Attempts to withdraw more than the limit
+        vm.warp(6 hours);
+        vm.prank(alice);
+        int256 secondAmount = 10_000e18;
+        deFi.withdraw(address(token), uint(secondAmount));
+        assertEq(guardian.checkIfRateLimitBreeched(address(token)), true);
+        assertEq(
+            guardian.tokenLiquidityWindowAmount(address(token)),
+            -withdrawalAmount - secondAmount
+        );
+        assertEq(guardian.tokenLiquidityHistoracle(address(token)), 1_000_000e18);
+
+        assertEq(
+            guardian.lockedFunds(address(alice), address(token)),
+            uint(withdrawalAmount + secondAmount)
+        );
+        assertEq(token.balanceOf(alice), 0);
+    }
 
     function testRateLimit() public {}
 

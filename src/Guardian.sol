@@ -108,7 +108,6 @@ contract Guardian is IGuardian {
             erc20TokenNoLimit.safeTransfer(_recipient, _amount);
             return;
         }
-
         _recordTokenChange(_tokenAddress, _amount, false);
         // Check if currently rate limited, if so, add to locked funds claimable when resolved
         if (isRateLimited) {
@@ -209,7 +208,6 @@ contract Guardian is IGuardian {
         //create a new inflow
         LiqChangeNode memory newLiqChange;
         newLiqChange.amount = int(_amount);
-        newLiqChange.nextTimestamp = 0;
 
         // add to window
         if (!_isPositive) {

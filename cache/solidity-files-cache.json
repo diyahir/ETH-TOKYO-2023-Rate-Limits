@@ -984,8 +984,8 @@
       }
     },
     "src/Guardian.sol": {
-      "lastModificationDate": 1684904804577,
-      "contentHash": "7053b37e3da8f82ebe36a36d1c5f61b9",
+      "lastModificationDate": 1684913473502,
+      "contentHash": "5f161f4336aa0dc4a0f8052bba4a735d",
       "sourceName": "src/Guardian.sol",
       "solcConfig": {
         "settings": {
@@ -1029,8 +1029,8 @@
       }
     },
     "src/IGuardian.sol": {
-      "lastModificationDate": 1684904562180,
-      "contentHash": "6fe3ae4719309595d9b09db7a559bb96",
+      "lastModificationDate": 1684913837238,
+      "contentHash": "c386801c9a8e01a88333138e010e33ec",
       "sourceName": "src/IGuardian.sol",
       "solcConfig": {
         "settings": {
@@ -1058,10 +1058,7 @@
           "libraries": {}
         }
       },
-      "imports": [
-        "lib/forge-std/src/console.sol",
-        "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol"
-      ],
+      "imports": [],
       "versionRequirement": "^0.8.13",
       "artifacts": {
         "IGuardian": {
@@ -1070,7 +1067,7 @@
       }
     },
     "src/MockDeFiProtocol.sol": {
-      "lastModificationDate": 1684896861714,
+      "lastModificationDate": 1684912642011,
       "contentHash": "54c5c8d68861c1b9b0e2c0b71a243ae3",
       "sourceName": "src/MockDeFiProtocol.sol",
       "solcConfig": {
@@ -1158,8 +1155,8 @@
       }
     },
     "test/Contract.t.sol": {
-      "lastModificationDate": 1684896205279,
-      "contentHash": "4e08372be611f57f0a0674522231327d",
+      "lastModificationDate": 1684913765963,
+      "contentHash": "46355d149f1defd6da8e7afcdaabd321",
       "sourceName": "test/Contract.t.sol",
       "solcConfig": {
         "settings": {
