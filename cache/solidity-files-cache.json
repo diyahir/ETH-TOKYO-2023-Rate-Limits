@@ -827,6 +827,124 @@
         }
       }
     },
+    "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol": {
+      "lastModificationDate": 1684739126355,
+      "contentHash": "e2c0f4f502e2fe75be0585737839ba9b",
+      "sourceName": "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs"
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": "^0.8.0",
+      "artifacts": {
+        "IERC20Permit": {
+          "0.8.14+commit.80d49f37.Darwin.appleclang": "IERC20Permit.sol/IERC20Permit.json"
+        }
+      }
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol": {
+      "lastModificationDate": 1684739126356,
+      "contentHash": "e8050eb2193adf2919db8192f4feb5cb",
+      "sourceName": "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs"
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
+        "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol",
+        "lib/openzeppelin-contracts/contracts/utils/Address.sol"
+      ],
+      "versionRequirement": "^0.8.0",
+      "artifacts": {
+        "SafeERC20": {
+          "0.8.14+commit.80d49f37.Darwin.appleclang": "SafeERC20.sol/SafeERC20.json"
+        }
+      }
+    },
+    "lib/openzeppelin-contracts/contracts/utils/Address.sol": {
+      "lastModificationDate": 1684739126359,
+      "contentHash": "2c6fe5d06414fe4187c8ede16c92b102",
+      "sourceName": "lib/openzeppelin-contracts/contracts/utils/Address.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs"
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": "^0.8.1",
+      "artifacts": {
+        "Address": {
+          "0.8.14+commit.80d49f37.Darwin.appleclang": "Address.sol/Address.json"
+        }
+      }
+    },
     "lib/openzeppelin-contracts/contracts/utils/Context.sol": {
       "lastModificationDate": 1684739126359,
       "contentHash": "5f2c5c4b6af2dd4551027144797bc8be",
@@ -866,9 +984,51 @@
       }
     },
     "src/Guardian.sol": {
-      "lastModificationDate": 1684823355597,
-      "contentHash": "98a4fc43e4f1e1f9400a62aa899def90",
+      "lastModificationDate": 1684896100178,
+      "contentHash": "f0458a189ee8210ed3db7b463caeeb2e",
       "sourceName": "src/Guardian.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs"
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "lib/forge-std/src/console.sol",
+        "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
+        "src/IGuardian.sol"
+      ],
+      "versionRequirement": "^0.8.13",
+      "artifacts": {
+        "Guardian": {
+          "0.8.14+commit.80d49f37.Darwin.appleclang": "Guardian.sol/Guardian.json"
+        }
+      }
+    },
+    "src/IGuardian.sol": {
+      "lastModificationDate": 1684893697294,
+      "contentHash": "ce4963b8df06a5fbb7e3df8615af4db0",
+      "sourceName": "src/IGuardian.sol",
       "solcConfig": {
         "settings": {
           "optimizer": {
@@ -901,14 +1061,14 @@
       ],
       "versionRequirement": "^0.8.13",
       "artifacts": {
-        "Guardian": {
-          "0.8.14+commit.80d49f37.Darwin.appleclang": "Guardian.sol/Guardian.json"
+        "IGuardian": {
+          "0.8.14+commit.80d49f37.Darwin.appleclang": "IGuardian.sol/IGuardian.json"
         }
       }
     },
     "src/MockDeFiProtocol.sol": {
-      "lastModificationDate": 1684823582867,
-      "contentHash": "167a207dca56a3fba098c58a9bd60be0",
+      "lastModificationDate": 1684896861714,
+      "contentHash": "54c5c8d68861c1b9b0e2c0b71a243ae3",
       "sourceName": "src/MockDeFiProtocol.sol",
       "solcConfig": {
         "settings": {
@@ -939,7 +1099,10 @@
       "imports": [
         "lib/forge-std/src/console.sol",
         "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
-        "src/Guardian.sol"
+        "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol",
+        "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol",
+        "lib/openzeppelin-contracts/contracts/utils/Address.sol",
+        "src/IGuardian.sol"
       ],
       "versionRequirement": "^0.8.13",
       "artifacts": {
@@ -992,8 +1155,8 @@
       }
     },
     "test/Contract.t.sol": {
-      "lastModificationDate": 1684823559101,
-      "contentHash": "b95c2ae67c595738ccfb479c7fa103a6",
+      "lastModificationDate": 1684896205279,
+      "contentHash": "4e08372be611f57f0a0674522231327d",
       "sourceName": "test/Contract.t.sol",
       "solcConfig": {
         "settings": {
@@ -1042,8 +1205,12 @@
         "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol",
         "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
         "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol",
+        "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol",
+        "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol",
+        "lib/openzeppelin-contracts/contracts/utils/Address.sol",
         "lib/openzeppelin-contracts/contracts/utils/Context.sol",
         "src/Guardian.sol",
+        "src/IGuardian.sol",
         "src/MockDeFiProtocol.sol",
         "src/MockToken.sol"
       ],
