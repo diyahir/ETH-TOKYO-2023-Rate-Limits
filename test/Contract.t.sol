@@ -20,11 +20,16 @@ contract ContractTest is Test {
     function setUp() public {
         token = new MyToken("USDC", "USDC");
         deFi = new MockDeFi();
-        guardian = new Guardian(admin, address(deFi));
+        guardian = new Guardian(admin, 3 days, 3 hours);
 
         deFi.setGuardian(address(guardian));
         vm.prank(admin);
 
+        address[] memory addresses = new address[](1);
+        addresses[0] = address(deFi);
+        guardian.addGuardedContracts(addresses);
+
+        vm.prank(admin);
         // Guard USDC with 70% max drawdown per 4 hours
         guardian.registerToken(address(token), 700, 4 hours, 1000e18);
         vm.warp(1 hours);
@@ -56,14 +61,17 @@ contract ContractTest is Test {
 
         assertEq(guardian.checkIfRateLimitBreeched(address(token)), false);
 
-        uint256 head = guardian.tokenLiqHead(address(token));
-        uint256 tail = guardian.tokenLiqTail(address(token));
+        uint256 head = guardian.tokenLiquidityHead(address(token));
+        uint256 tail = guardian.tokenLiquidityTail(address(token));
 
         assertEq(head, tail);
-        assertEq(guardian.tokenLiqHistoracle(address(token)), 0);
-        assertEq(guardian.tokenLiqWindowAmount(address(token)), 10e18);
+        assertEq(guardian.tokenLiquidityHistoracle(address(token)), 0);
+        assertEq(guardian.tokenLiquidityWindowAmount(address(token)), 10e18);
 
-        (uint256 nextTimestamp, int256 amount) = guardian.tokenLiqChanges(address(token), head);
+        (uint256 nextTimestamp, int256 amount) = guardian.tokenLiquidityChanges(
+            address(token),
+            head
+        );
         assertEq(nextTimestamp, 0);
         assertEq(amount, 10e18);
 
@@ -71,24 +79,52 @@ contract ContractTest is Test {
         vm.prank(alice);
         deFi.deposit(address(token), 110e18);
         assertEq(guardian.checkIfRateLimitBreeched(address(token)), false);
-        assertEq(guardian.tokenLiqWindowAmount(address(token)), 120e18);
-        assertEq(guardian.tokenLiqHistoracle(address(token)), 0);
+        assertEq(guardian.tokenLiquidityWindowAmount(address(token)), 120e18);
+        assertEq(guardian.tokenLiquidityHistoracle(address(token)), 0);
 
         // All the previous deposits are now out of the window and accounted for in the historacle
         vm.warp(10 hours);
         vm.prank(alice);
         deFi.deposit(address(token), 10e18);
         assertEq(guardian.checkIfRateLimitBreeched(address(token)), false);
-        assertEq(guardian.tokenLiqWindowAmount(address(token)), 10e18);
-        assertEq(guardian.tokenLiqHistoracle(address(token)), 120e18);
+        assertEq(guardian.tokenLiquidityWindowAmount(address(token)), 10e18);
+        assertEq(guardian.tokenLiquidityHistoracle(address(token)), 120e18);
 
-        uint256 tailNext = guardian.tokenLiqTail(address(token));
-        uint256 headNext = guardian.tokenLiqHead(address(token));
+        uint256 tailNext = guardian.tokenLiquidityTail(address(token));
+        uint256 headNext = guardian.tokenLiquidityHead(address(token));
         assertEq(headNext, block.timestamp);
         assertEq(tailNext, block.timestamp);
     }
 
-    function testWithdrawls() public {}
+    function testWithdrawls() public {
+        token.mint(alice, 10000e18);
+
+        vm.prank(alice);
+        token.approve(address(deFi), 10000e18);
+
+        vm.prank(alice);
+        deFi.deposit(address(token), 100e18);
+
+        vm.warp(1 hours);
+        vm.prank(alice);
+        deFi.withdraw(address(token), 60e18);
+        assertEq(guardian.checkIfRateLimitBreeched(address(token)), false);
+        assertEq(guardian.tokenLiquidityWindowAmount(address(token)), 40e18);
+        assertEq(guardian.tokenLiquidityHistoracle(address(token)), 0);
+
+        // All the previous deposits are now out of the window and accounted for in the historacle
+        vm.warp(10 hours);
+        vm.prank(alice);
+        deFi.deposit(address(token), 10e18);
+        assertEq(guardian.checkIfRateLimitBreeched(address(token)), false);
+        assertEq(guardian.tokenLiquidityWindowAmount(address(token)), 10e18);
+        assertEq(guardian.tokenLiquidityHistoracle(address(token)), 40e18);
+
+        uint256 tailNext = guardian.tokenLiquidityTail(address(token));
+        uint256 headNext = guardian.tokenLiquidityHead(address(token));
+        assertEq(headNext, block.timestamp);
+        assertEq(tailNext, block.timestamp);
+    }
 
     function testBreach() public {}
 
