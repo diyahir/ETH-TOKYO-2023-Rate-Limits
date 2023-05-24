@@ -26,6 +26,8 @@ interface IGuardian {
 
     function checkIfRateLimitBreeched(address _tokenAddress) external returns (bool);
 
+    function clearBackLog(address _tokenAddress, uint64 _maxIterations) external;
+
     function overrideLimit() external;
 
     function transferAdmin(address _admin) external;

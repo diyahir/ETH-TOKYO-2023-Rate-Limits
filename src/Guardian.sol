@@ -2,7 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/console.sol";
-import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
+import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 import {IGuardian} from "./IGuardian.sol";
 
 struct LiqChangeNode {
@@ -18,6 +19,7 @@ struct TokenRateLimitInfo {
 }
 
 contract Guardian is IGuardian {
+    using SafeERC20 for IERC20;
     // Rate limit precision, example 700 = 70% max drawdown per period
     int256 public constant PRECISION = 1000;
 
@@ -46,6 +48,11 @@ contract Guardian is IGuardian {
     // recipient => token => amount
     mapping(address => mapping(address => uint256)) public lockedFunds;
 
+    // Guarded contracts
+    mapping(address => bool) public isGuarded;
+    // List of guarded contracts
+    address[] public guardedContracts;
+
     address public admin;
 
     bool public isRateLimited;
@@ -56,10 +63,7 @@ contract Guardian is IGuardian {
 
     uint256 public gracePeriod = 3 hours;
 
-    // Guarded contracts
-    mapping(address => bool) public isGuarded;
-    // List of guarded contracts
-    address[] public guardedContracts;
+    uint64 MAX_INT = 2 ** 64 - 1;
 
     // gracePeriod refers to the time after a rate limit breech and then overriden where withdrawals are still allowed
     // for example a false positive rate limit breech, then it is overrident, so withdrawals are still allowed for a period of time
@@ -101,7 +105,7 @@ contract Guardian is IGuardian {
         if (!tokenRlInfoInfo.exists) {
             // if it is not rate limited, just transfer the tokens
             IERC20 erc20TokenNoLimit = IERC20(_tokenAddress);
-            erc20TokenNoLimit.transfer(_recipient, _amount);
+            erc20TokenNoLimit.safeTransfer(_recipient, _amount);
             return;
         }
 
@@ -125,7 +129,7 @@ contract Guardian is IGuardian {
 
         // if everything is good, transfer the tokens
         IERC20 erc20Token = IERC20(_tokenAddress);
-        erc20Token.transfer(_recipient, _amount);
+        erc20Token.safeTransfer(_recipient, _amount);
     }
 
     function overrideLimit() external onlyAdmin {
@@ -141,7 +145,7 @@ contract Guardian is IGuardian {
         require(lockedFunds[msg.sender][_tokenAddress] > 0, "No locked funds");
         require(!isRateLimited, "Rate limited");
         IERC20 erc20Token = IERC20(_tokenAddress);
-        erc20Token.transfer(msg.sender, lockedFunds[msg.sender][_tokenAddress]);
+        erc20Token.safeTransfer(msg.sender, lockedFunds[msg.sender][_tokenAddress]);
         lockedFunds[msg.sender][_tokenAddress] = 0;
     }
 
@@ -225,7 +229,7 @@ contract Guardian is IGuardian {
             if (
                 block.timestamp - tokenLiquidityHead[_tokenAddress] >= tokenRlInfo.withdrawalPeriod
             ) {
-                _traverseLinkedListUntilInPeriod(_tokenAddress, block.timestamp);
+                _traverseLinkedListUntilInPeriod(_tokenAddress, block.timestamp, MAX_INT);
             }
 
             // check if tail is the same as block.timestamp (multiple txs in same block)
@@ -244,13 +248,27 @@ contract Guardian is IGuardian {
         }
     }
 
+    // Due to potential inactivity, the linked list may grow to where
+    // it is better to clear the backlog in advance to save gas for the users
+    // this is a public function so that anyone can call it as it is not user sensitive
+    function clearBackLog(address _tokenAddress, uint64 _maxIterations) external {
+        _traverseLinkedListUntilInPeriod(_tokenAddress, block.timestamp, _maxIterations);
+    }
+
     // Traverse the linked list from the head until the timestamp is within the period
-    function _traverseLinkedListUntilInPeriod(address _tokenAddress, uint256 _timestamp) internal {
+    function _traverseLinkedListUntilInPeriod(
+        address _tokenAddress,
+        uint256 _timestamp,
+        uint64 _maxIterations
+    ) internal {
         int256 totalChange = 0;
         uint256 currentHeadTimestamp = tokenLiquidityHead[_tokenAddress];
+        uint64 iterations = 0;
         while (
             currentHeadTimestamp != 0 &&
-            _timestamp - currentHeadTimestamp >= tokensRateLimitInfo[_tokenAddress].withdrawalPeriod
+            _timestamp - currentHeadTimestamp >=
+            tokensRateLimitInfo[_tokenAddress].withdrawalPeriod &&
+            iterations < _maxIterations
         ) {
             LiqChangeNode memory node = tokenLiquidityChanges[_tokenAddress][currentHeadTimestamp];
             totalChange += node.amount;
@@ -259,6 +277,8 @@ contract Guardian is IGuardian {
 
             currentHeadTimestamp = tokenLiquidityChanges[_tokenAddress][currentHeadTimestamp]
                 .nextTimestamp;
+
+            iterations++;
         }
         // Set new head, if there is no head, set it to the current timestamp
         if (currentHeadTimestamp == 0) {

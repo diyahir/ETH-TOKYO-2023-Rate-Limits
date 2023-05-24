@@ -20,6 +20,3 @@ jobs:
 
       - name: Run tests
         run: forge test
-        env:
-          GOERLI_RPC_URL: ${{ secrets.GOERLI_RPC_URL }}
-          MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
