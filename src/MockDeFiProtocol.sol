@@ -24,8 +24,4 @@ contract MockDeFi {
         IERC20(token).safeTransfer(address(guardian), amount);
         guardian.withdraw(token, amount, msg.sender);
     }
-
-    function getGuardian() external view returns (address) {
-        return address(guardian);
-    }
 }

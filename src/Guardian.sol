@@ -236,10 +236,8 @@ contract Guardian is IGuardian {
                 tokenLiquidityChanges[_tokenAddress][block.timestamp].amount += newLiqChange.amount;
             } else {
                 // add to tail
-                LiqChangeNode storage tail = tokenLiquidityChanges[_tokenAddress][
-                    tokenLiquidityTail[_tokenAddress]
-                ];
-                tail.nextTimestamp = block.timestamp;
+                tokenLiquidityChanges[_tokenAddress][tokenLiquidityTail[_tokenAddress]]
+                    .nextTimestamp = block.timestamp;
                 tokenLiquidityChanges[_tokenAddress][block.timestamp] = newLiqChange;
                 tokenLiquidityTail[_tokenAddress] = block.timestamp;
             }
@@ -262,25 +260,27 @@ contract Guardian is IGuardian {
         int256 totalChange = 0;
         uint256 currentHeadTimestamp = tokenLiquidityHead[_tokenAddress];
         uint64 iterations = 0;
+
         while (
             currentHeadTimestamp != 0 &&
             _timestamp - currentHeadTimestamp >=
             tokensRateLimitInfo[_tokenAddress].withdrawalPeriod &&
-            iterations < _maxIterations
+            iterations <= _maxIterations
         ) {
             LiqChangeNode memory node = tokenLiquidityChanges[_tokenAddress][currentHeadTimestamp];
+            uint256 nextTimestamp = node.nextTimestamp;
+            // Save the nextTimestamp before deleting the node
             totalChange += node.amount;
             // Clear data
             delete tokenLiquidityChanges[_tokenAddress][currentHeadTimestamp];
 
-            currentHeadTimestamp = tokenLiquidityChanges[_tokenAddress][currentHeadTimestamp]
-                .nextTimestamp;
-
+            currentHeadTimestamp = nextTimestamp;
             iterations++;
         }
-        // Set new head, if there is no head, set it to the current timestamp
+
         if (currentHeadTimestamp == 0) {
             tokenLiquidityHead[_tokenAddress] = _timestamp;
+            tokenLiquidityTail[_tokenAddress] = _timestamp;
         } else {
             tokenLiquidityHead[_tokenAddress] = currentHeadTimestamp;
         }
