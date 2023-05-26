@@ -6,7 +6,7 @@
 - Performant Codebase
 - Easy integration
 - Multiple tokens supports with custom withdrawal rate limits and periods for each token.
-- Records inflows/outflows of token and maintains a Historacle Oracle of the protocol's token Liquidity.
+- Records inflows/outflows of token and maintains a Historical Oracle of the protocol's token Liquidity.
 - Enforces withdrawal limits and periods to prevent excessive fund withdrawals (hack prevention).
 - Allows the contract owner to register tokens, override limits, and transfer admin privileges.
 - Provides a convenient function for guarded contracts to record inflows and withdraw available funds.
