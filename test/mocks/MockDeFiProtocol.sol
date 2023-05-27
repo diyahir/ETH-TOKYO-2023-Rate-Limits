@@ -5,7 +5,7 @@ import "forge-std/console.sol";
 import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
-import { IGuardian } from "../../src/interfaces/IGuardian.sol";
+import {IGuardian} from "../../src/interfaces/IGuardian.sol";
 
 contract MockDeFiProtocol {
     using SafeERC20 for IERC20;

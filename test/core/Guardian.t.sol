@@ -2,10 +2,9 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import { MockToken } from "../mocks/MockToken.sol";
-import { MockDeFiProtocol } from "../mocks/MockDeFiProtocol.sol";
-import { Guardian } from "../../src/core/Guardian.sol";
-
+import {MockToken} from "../mocks/MockToken.sol";
+import {MockDeFiProtocol} from "../mocks/MockDeFiProtocol.sol";
+import {Guardian} from "../../src/core/Guardian.sol";
 
 contract GuadianTest is Test {
     MockToken internal _token;
@@ -29,7 +28,7 @@ contract GuadianTest is Test {
 
         address[] memory addresses = new address[](1);
         addresses[0] = address(_deFi);
-        
+
         vm.prank(_admin);
         _guardian.addGuardedContracts(addresses);
 
@@ -65,16 +64,11 @@ contract GuadianTest is Test {
         _secondToken = new MockToken("DAI", "DAI");
         vm.prank(_admin);
         _guardian.registerToken(address(_secondToken), 700, 4 hours, 1000e18);
-        (
-            uint256 bootstrapAmount,
-            uint256 withdrawalPeriod,
-            int256 withdrawalRateLimitPerPeriod,
-            bool exists
-        ) = _guardian.tokensRateLimitInfo(address(_secondToken));
-        assertEq(bootstrapAmount, 1000e18);
+        (uint256 minAmount, uint256 withdrawalPeriod, uint256 minLiquidityThreshold) =
+            _guardian.tokenRateLimitInfo(address(_secondToken));
+        assertEq(minAmount, 1000e18);
         assertEq(withdrawalPeriod, 4 hours);
-        assertEq(withdrawalRateLimitPerPeriod, 700);
-        assertEq(exists, true);
+        assertEq(minLiquidityThreshold, 700);
 
         // Cannot register the same _token twice
         vm.expectRevert();
@@ -92,11 +86,11 @@ contract GuadianTest is Test {
         vm.prank(_alice);
         _deFi.deposit(address(_unlimitedToken), 10000e18);
 
-        assertEq(_guardian.checkIfRateLimitBreeched(address(_unlimitedToken)), false);
+        assertEq(_guardian.isRateLimitBreeched(address(_unlimitedToken)), false);
         vm.warp(1 hours);
         vm.prank(_alice);
         _deFi.withdraw(address(_unlimitedToken), 10000e18);
-        assertEq(_guardian.checkIfRateLimitBreeched(address(_unlimitedToken)), false);
+        assertEq(_guardian.isRateLimitBreeched(address(_unlimitedToken)), false);
     }
 
     function testDeposit() public {
@@ -108,36 +102,33 @@ contract GuadianTest is Test {
         vm.prank(_alice);
         _deFi.deposit(address(_token), 10e18);
 
-        assertEq(_guardian.checkIfRateLimitBreeched(address(_token)), false);
+        assertEq(_guardian.isRateLimitBreeched(address(_token)), false);
 
         uint256 head = _guardian.tokenLiquidityHead(address(_token));
         uint256 tail = _guardian.tokenLiquidityTail(address(_token));
 
         assertEq(head, tail);
-        assertEq(_guardian.tokenLiquidityHistoracle(address(_token)), 0);
-        assertEq(_guardian.tokenLiquidityWindowAmount(address(_token)), 10e18);
+        assertEq(_guardian.tokenLiquidityTotal(address(_token)), 0);
+        assertEq(_guardian.tokenLiquidityInPeriod(address(_token)), 10e18);
 
-        (uint256 nextTimestamp, int256 amount) = _guardian.tokenLiquidityChanges(
-            address(_token),
-            head
-        );
+        (uint256 nextTimestamp, int256 amount) = _guardian.tokenLiquidityChanges(address(_token), head);
         assertEq(nextTimestamp, 0);
         assertEq(amount, 10e18);
 
         vm.warp(1 hours);
         vm.prank(_alice);
         _deFi.deposit(address(_token), 110e18);
-        assertEq(_guardian.checkIfRateLimitBreeched(address(_token)), false);
-        assertEq(_guardian.tokenLiquidityHistoracle(address(_token)), 0);
-        assertEq(_guardian.tokenLiquidityWindowAmount(address(_token)), 120e18);
+        assertEq(_guardian.isRateLimitBreeched(address(_token)), false);
+        assertEq(_guardian.tokenLiquidityTotal(address(_token)), 0);
+        assertEq(_guardian.tokenLiquidityInPeriod(address(_token)), 120e18);
 
         // All the previous deposits are now out of the window and accounted for in the historacle
         vm.warp(10 hours);
         vm.prank(_alice);
         _deFi.deposit(address(_token), 10e18);
-        assertEq(_guardian.checkIfRateLimitBreeched(address(_token)), false);
-        assertEq(_guardian.tokenLiquidityWindowAmount(address(_token)), 10e18);
-        assertEq(_guardian.tokenLiquidityHistoracle(address(_token)), 120e18);
+        assertEq(_guardian.isRateLimitBreeched(address(_token)), false);
+        assertEq(_guardian.tokenLiquidityInPeriod(address(_token)), 10e18);
+        assertEq(_guardian.tokenLiquidityTotal(address(_token)), 120e18);
 
         uint256 tailNext = _guardian.tokenLiquidityTail(address(_token));
         uint256 headNext = _guardian.tokenLiquidityHead(address(_token));
@@ -174,8 +165,8 @@ contract GuadianTest is Test {
         _guardian.clearBackLog(address(_token), 10);
 
         // only deposits from 2.5 hours and later should be in the window
-        assertEq(_guardian.tokenLiquidityWindowAmount(address(_token)), 3);
-        assertEq(_guardian.tokenLiquidityHistoracle(address(_token)), 2);
+        assertEq(_guardian.tokenLiquidityInPeriod(address(_token)), 3);
+        assertEq(_guardian.tokenLiquidityTotal(address(_token)), 2);
 
         assertEq(_guardian.tokenLiquidityHead(address(_token)), 3 hours);
         assertEq(_guardian.tokenLiquidityTail(address(_token)), 5 hours);
@@ -193,18 +184,18 @@ contract GuadianTest is Test {
         vm.warp(1 hours);
         vm.prank(_alice);
         _deFi.withdraw(address(_token), 60e18);
-        assertEq(_guardian.checkIfRateLimitBreeched(address(_token)), false);
-        assertEq(_guardian.tokenLiquidityWindowAmount(address(_token)), 40e18);
-        assertEq(_guardian.tokenLiquidityHistoracle(address(_token)), 0);
+        assertEq(_guardian.isRateLimitBreeched(address(_token)), false);
+        assertEq(_guardian.tokenLiquidityInPeriod(address(_token)), 40e18);
+        assertEq(_guardian.tokenLiquidityTotal(address(_token)), 0);
         assertEq(_token.balanceOf(_alice), 9960e18);
 
         // All the previous deposits are now out of the window and accounted for in the historacle
         vm.warp(10 hours);
         vm.prank(_alice);
         _deFi.deposit(address(_token), 10e18);
-        assertEq(_guardian.checkIfRateLimitBreeched(address(_token)), false);
-        assertEq(_guardian.tokenLiquidityWindowAmount(address(_token)), 10e18);
-        assertEq(_guardian.tokenLiquidityHistoracle(address(_token)), 40e18);
+        assertEq(_guardian.isRateLimitBreeched(address(_token)), false);
+        assertEq(_guardian.tokenLiquidityInPeriod(address(_token)), 10e18);
+        assertEq(_guardian.tokenLiquidityTotal(address(_token)), 40e18);
 
         uint256 tailNext = _guardian.tokenLiquidityTail(address(_token));
         uint256 headNext = _guardian.tokenLiquidityHead(address(_token));
@@ -221,11 +212,11 @@ contract GuadianTest is Test {
         vm.prank(_admin);
         _guardian.addGuardedContracts(addresses);
 
-        assertEq(_guardian.isGuarded(address(secondDeFi)), true);
+        assertEq(_guardian.isGuardedContract(address(secondDeFi)), true);
 
         vm.prank(_admin);
         _guardian.removeGuardedContracts(addresses);
-        assertEq(_guardian.isGuarded(address(secondDeFi)), false);
+        assertEq(_guardian.isGuardedContract(address(secondDeFi)), false);
     }
 
     function testBreach() public {
@@ -243,43 +234,37 @@ contract GuadianTest is Test {
         int256 withdrawalAmount = 300_001e18;
         vm.warp(5 hours);
         vm.prank(_alice);
-        _deFi.withdraw(address(_token), uint(withdrawalAmount));
-        assertEq(_guardian.checkIfRateLimitBreeched(address(_token)), true);
-        assertEq(_guardian.tokenLiquidityWindowAmount(address(_token)), -withdrawalAmount);
-        assertEq(_guardian.tokenLiquidityHistoracle(address(_token)), 1_000_000e18);
+        _deFi.withdraw(address(_token), uint256(withdrawalAmount));
+        assertEq(_guardian.isRateLimitBreeched(address(_token)), true);
+        assertEq(_guardian.tokenLiquidityInPeriod(address(_token)), -withdrawalAmount);
+        assertEq(_guardian.tokenLiquidityTotal(address(_token)), 1_000_000e18);
 
-        assertEq(_guardian.lockedFunds(address(_alice), address(_token)), uint(withdrawalAmount));
+        assertEq(_guardian.lockedFunds(address(_alice), address(_token)), uint256(withdrawalAmount));
         assertEq(_token.balanceOf(_alice), 0);
-        assertEq(_token.balanceOf(address(_guardian)), uint(withdrawalAmount));
-        assertEq(_token.balanceOf(address(_deFi)), 1_000_000e18 - uint(withdrawalAmount));
+        assertEq(_token.balanceOf(address(_guardian)), uint256(withdrawalAmount));
+        assertEq(_token.balanceOf(address(_deFi)), 1_000_000e18 - uint256(withdrawalAmount));
 
         // Attempts to withdraw more than the limit
         vm.warp(6 hours);
         vm.prank(_alice);
         int256 secondAmount = 10_000e18;
-        _deFi.withdraw(address(_token), uint(secondAmount));
-        assertEq(_guardian.checkIfRateLimitBreeched(address(_token)), true);
-        assertEq(
-            _guardian.tokenLiquidityWindowAmount(address(_token)),
-            -withdrawalAmount - secondAmount
-        );
-        assertEq(_guardian.tokenLiquidityHistoracle(address(_token)), 1_000_000e18);
+        _deFi.withdraw(address(_token), uint256(secondAmount));
+        assertEq(_guardian.isRateLimitBreeched(address(_token)), true);
+        assertEq(_guardian.tokenLiquidityInPeriod(address(_token)), -withdrawalAmount - secondAmount);
+        assertEq(_guardian.tokenLiquidityTotal(address(_token)), 1_000_000e18);
 
-        assertEq(
-            _guardian.lockedFunds(address(_alice), address(_token)),
-            uint(withdrawalAmount + secondAmount)
-        );
+        assertEq(_guardian.lockedFunds(address(_alice), address(_token)), uint256(withdrawalAmount + secondAmount));
         assertEq(_token.balanceOf(_alice), 0);
 
         // False alarm
         // override the limit and allow claim of funds
         vm.prank(_admin);
-        _guardian.overrideLimit();
+        _guardian.removeRateLimit();
 
         vm.warp(7 hours);
         vm.prank(_alice);
         _guardian.claimLockedFunds(address(_token));
-        assertEq(_token.balanceOf(_alice), uint(withdrawalAmount + secondAmount));
+        assertEq(_token.balanceOf(_alice), uint256(withdrawalAmount + secondAmount));
     }
 
     function testBreachAndLimitExpired() public {
@@ -297,24 +282,24 @@ contract GuadianTest is Test {
         int256 withdrawalAmount = 300_001e18;
         vm.warp(5 hours);
         vm.prank(_alice);
-        _deFi.withdraw(address(_token), uint(withdrawalAmount));
-        assertEq(_guardian.checkIfRateLimitBreeched(address(_token)), true);
+        _deFi.withdraw(address(_token), uint256(withdrawalAmount));
+        assertEq(_guardian.isRateLimitBreeched(address(_token)), true);
         assertEq(_guardian.isRateLimited(), true);
 
         vm.warp(4 days);
         vm.prank(_alice);
-        _guardian.overrideExpiredRateLimit();
+        _guardian.removeExpiredRateLimit();
         assertEq(_guardian.isRateLimited(), false);
     }
 
     function testAdmin() public {
         assertEq(_guardian.admin(), _admin);
         vm.prank(_admin);
-        _guardian.transferAdmin(_bob);
+        _guardian.setAdmin(_bob);
         assertEq(_guardian.admin(), _bob);
 
         vm.expectRevert();
         vm.prank(_admin);
-        _guardian.transferAdmin(_alice);
+        _guardian.setAdmin(_alice);
     }
 }

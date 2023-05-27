@@ -1034,8 +1034,8 @@
       }
     },
     "src/core/Guardian.sol": {
-      "lastModificationDate": 1685144996102,
-      "contentHash": "b7ab8fd477f3f48ad0629067052c8bf4",
+      "lastModificationDate": 1685227383936,
+      "contentHash": "01e64ae82c76273b929109ff7d250a50",
       "sourceName": "src/core/Guardian.sol",
       "solcConfig": {
         "settings": {
@@ -1081,8 +1081,8 @@
       }
     },
     "src/interfaces/IGuardian.sol": {
-      "lastModificationDate": 1685103251808,
-      "contentHash": "c386801c9a8e01a88333138e010e33ec",
+      "lastModificationDate": 1685227313874,
+      "contentHash": "929cd9ff05247a65a69e7f9fca3130aa",
       "sourceName": "src/interfaces/IGuardian.sol",
       "solcConfig": {
         "settings": {
@@ -1112,8 +1112,10 @@
           "libraries": {}
         }
       },
-      "imports": [],
-      "versionRequirement": "^0.8.13",
+      "imports": [
+        "src/static/Structs.sol"
+      ],
+      "versionRequirement": "=0.8.19",
       "artifacts": {
         "IGuardian": {
           "0.8.19+commit.7dd6d404.Darwin.appleclang": "IGuardian.sol/IGuardian.json"
@@ -1121,8 +1123,8 @@
       }
     },
     "src/static/Structs.sol": {
-      "lastModificationDate": 1685104237547,
-      "contentHash": "d969d9625d8e35e73ed85aefcca5bbb4",
+      "lastModificationDate": 1685226024582,
+      "contentHash": "b3bf81c85f417d2d7b0ddd1059f77b96",
       "sourceName": "src/static/Structs.sol",
       "solcConfig": {
         "settings": {
@@ -1161,8 +1163,8 @@
       }
     },
     "test/core/Guardian.t.sol": {
-      "lastModificationDate": 1685144937922,
-      "contentHash": "1f60ef8c17f7cc8bae29c77530b19f0c",
+      "lastModificationDate": 1685227069091,
+      "contentHash": "5be0f1d4a6302db3e93d7851129c4edc",
       "sourceName": "test/core/Guardian.t.sol",
       "solcConfig": {
         "settings": {
@@ -1268,7 +1270,8 @@
         "lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol",
         "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol",
         "lib/openzeppelin-contracts/contracts/utils/Address.sol",
-        "src/interfaces/IGuardian.sol"
+        "src/interfaces/IGuardian.sol",
+        "src/static/Structs.sol"
       ],
       "versionRequirement": "^0.8.13",
       "artifacts": {

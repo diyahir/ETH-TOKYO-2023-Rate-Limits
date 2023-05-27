@@ -10,7 +10,7 @@ contract MockToken is ERC20 {
         _mint(to, amount);
     }
 
-    function burn(address form, uint amount) public virtual {
+    function burn(address form, uint256 amount) public virtual {
         _burn(form, amount);
     }
 }
