@@ -4,11 +4,10 @@ pragma solidity 0.8.19;
 import {LiqChangeNode, TokenRateLimitInfo} from "../static/Structs.sol";
 
 interface IGuardian {
-    /**
-     *
+
+    /*******************************
      * State changing functions *
-     *
-     */
+     *******************************/
 
     function registerToken(
         address _token,
@@ -35,11 +34,9 @@ interface IGuardian {
 
     function removeGuardedContracts(address[] calldata _guardedContracts) external;
 
-    /**
-     *
+    /*******************************
      * Read-only functions *
-     *
-     */
+     *******************************/
 
     function tokenLiquidityTotal(address token) external view returns (int256 amount);
 
@@ -59,8 +56,6 @@ interface IGuardian {
 
     function isGuardedContract(address account) external view returns (bool guardActive);
 
-    function tokenRateLimitInfoExists(TokenRateLimitInfo memory tokenRLinfo) external pure returns (bool exists);
-
     function admin() external view returns (address);
 
     function isRateLimited() external view returns (bool);
@@ -74,4 +69,6 @@ interface IGuardian {
     function isRateLimitBreeched(address _token) external view returns (bool);
 
     function isInGracePeriod() external view returns (bool);
+
+    function tokenRateLimitInfoExists(TokenRateLimitInfo memory tokenRLinfo) external pure returns (bool exists);
 }

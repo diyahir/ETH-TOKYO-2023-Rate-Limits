@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
-import "openzeppelin-contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 import {IGuardian} from "../interfaces/IGuardian.sol";
 import {LiqChangeNode, TokenRateLimitInfo} from "../static/Structs.sol";
@@ -10,11 +10,9 @@ import {LiqChangeNode, TokenRateLimitInfo} from "../static/Structs.sol";
 contract Guardian is IGuardian {
     using SafeERC20 for IERC20;
 
-    /**
-     *
+    /*******************************
      * Errors *
-     *
-     */
+     *******************************/
 
     error NotAGuardedContract();
     error NotAdmin();
@@ -26,12 +24,13 @@ contract Guardian is IGuardian {
     error NotRateLimited();
     error CooldownPeriodNotReached();
 
-    /**
-     *
+    /*******************************
      * Events *
-     *
-     */
+     *******************************/
 
+    /**
+     * @notice Emitted when a token is registered
+     */
     event TokenRegistered(
         address indexed token, uint256 withdrawalPeriod, uint256 minLiquidityThreshold, uint256 minAmount
     );
@@ -43,26 +42,27 @@ contract Guardian is IGuardian {
     event TokenBacklogCleaned(address indexed token, uint256 timestamp);
     event AdminSet(address indexed newAdmin);
 
-    /**
-     *
+    /*******************************
      * Constants *
-     *
-     */
+     *******************************/
 
     uint256 public constant BPS_DENOMINATOR = 10000;
 
     uint256 public constant MAX_INT = 2 ** 64 - 1;
 
-    /**
-     *
+    /*******************************
      * State vars *
-     *
-     */
+     *******************************/
 
-    // The aggregate amount of total recorded liquidity per token.
+    /**
+     * @notice The aggregate amount of total recorded liquidity per token
+     * @dev only updated at token inflow and withdraw operations
+     */
     mapping(address token => int256 amount) public tokenLiquidityTotal;
 
-    // The amount of recorded liquidity in the current withdraw period, per token.
+    /**
+     * @notice The amount of recorded liquidity in the current withdraw period, per token.
+     */
     mapping(address token => int256 amount) public tokenLiquidityInPeriod;
 
     mapping(address token => uint256 timestamp) public tokenLiquidityHead;
@@ -72,7 +72,9 @@ contract Guardian is IGuardian {
 
     mapping(address token => TokenRateLimitInfo info) public tokenRateLimitInfo;
 
-    // Funds locked if rate limited reached
+    /**
+     * @notice Funds locked if rate limited reached
+     */
     mapping(address recipient => mapping(address token => uint256 amount)) public lockedFunds;
 
     mapping(address account => bool guardActive) public isGuardedContract;
@@ -87,11 +89,9 @@ contract Guardian is IGuardian {
 
     uint256 public gracePeriod = 3 hours;
 
-    /**
-     *
+    /*******************************
      * Modifiers *
-     *
-     */
+     *******************************/
 
     modifier onlyGuarded() {
         if (!isGuardedContract[msg.sender]) revert NotAGuardedContract();
@@ -103,29 +103,29 @@ contract Guardian is IGuardian {
         _;
     }
 
-    /**
-     *
+    /*******************************
      * Constructor *
-     *
-     */
+     *******************************/
+
 
     /**
-     * gracePeriod refers to the time after a rate limit breech and then overriden where withdrawals are still allowed.
-     *    For example a false positive rate limit breech, then it is overriden, so withdrawals are still 
-     *    allowed for a period of time. 
-     *    Before the rate limit is enforced again, it should be set to be at least your largest withdrawalPeriod length
+     * @notice gracePeriod refers to the time after a rate limit breech and then overriden where withdrawals are 
+     * still allowed.
+     * @dev For example a false positive rate limit breech, then it is overriden, so withdrawals are still
+     * allowed for a period of time. 
+     * Before the rate limit is enforced again, it should be set to be at least your largest 
+     * withdrawalPeriod length
      */
+
     constructor(address _admin, uint256 _rateLimitCooldownPeriod, uint256 _gracePeriod) {
         admin = _admin;
         rateLimitCooldownPeriod = _rateLimitCooldownPeriod;
         gracePeriod = _gracePeriod;
     }
 
-    /**
-     *
+    /*******************************
      * Functions *
-     *
-     */
+     *******************************/
 
     function registerToken(
         address _token,
@@ -145,7 +145,9 @@ contract Guardian is IGuardian {
         emit TokenRegistered(_token, _withdrawalPeriod, _minLiquidityThreshold, _minAmount);
     }
 
-    // give guarded contracts one function to call for convenience
+    /**
+     * @dev Give guarded contracts one function to call for convenience
+     */
     function recordInflow(address _token, uint256 _amount) external onlyGuarded {
         _recordTokenChange(_token, _amount, true);
         emit TokenInflow(_token, _amount);
@@ -197,7 +199,9 @@ contract Guardian is IGuardian {
         }
     }
 
-    // Traverse the linked list from the head until the timestamp is within the period
+    /**
+     * @dev Traverse the linked list from the head until the timestamp is within the period
+     */
     function _traverseLinkedListUntilInPeriod(address _token, uint256 _timestamp, uint256 _maxIterations) internal {
         int256 totalChange = 0;
         uint256 currentHeadTimestamp = tokenLiquidityHead[_token];
@@ -292,7 +296,9 @@ contract Guardian is IGuardian {
         return block.timestamp - lastRateLimitTimestamp <= gracePeriod && !isRateLimited;
     }
 
-    // Allow users to claim locked funds when rate limit is resolved
+    /**
+     * @notice Allow users to claim locked funds when rate limit is resolved
+     */
     function claimLockedFunds(address _token) external {
         if (lockedFunds[msg.sender][_token] == 0) revert NoLockedFunds();
         if (isRateLimited) revert RateLimited();
@@ -303,9 +309,11 @@ contract Guardian is IGuardian {
         emit LockedFundsClaimed(_token, msg.sender);
     }
 
-    // Due to potential inactivity, the linked list may grow to where
-    // it is better to clear the backlog in advance to save gas for the users
-    // this is a public function so that anyone can call it as it is not user sensitive
+    /**
+     * @dev Due to potential inactivity, the linked list may grow to where
+     * it is better to clear the backlog in advance to save gas for the users
+     * this is a public function so that anyone can call it as it is not user sensitive
+     */
     function clearBackLog(address _token, uint256 _maxIterations) external {
         _traverseLinkedListUntilInPeriod(_token, block.timestamp, _maxIterations);
         emit TokenBacklogCleaned(_token, block.timestamp);
@@ -328,14 +336,12 @@ contract Guardian is IGuardian {
         isRateLimited = false;
     }
 
-    // NOTE: Events not added because of cost
     function addGuardedContracts(address[] calldata _guardedContracts) external onlyAdmin {
         for (uint256 i = 0; i < _guardedContracts.length; i++) {
             isGuardedContract[_guardedContracts[i]] = true;
         }
     }
 
-    // NOTE: Events not added because of cost
     function removeGuardedContracts(address[] calldata _guardedContracts) external onlyAdmin {
         for (uint256 i = 0; i < _guardedContracts.length; i++) {
             isGuardedContract[_guardedContracts[i]] = false;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
-import "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {MockToken} from "../mocks/MockToken.sol";
 import {MockDeFiProtocol} from "../mocks/MockDeFiProtocol.sol";
 import {Guardian} from "../../src/core/Guardian.sol";
@@ -60,20 +60,36 @@ contract GuadianTest is Test {
         assertEq(_token.balanceOf(_alice), 2e18);
     }
 
-    function testRegisterNewToken() public {
+    function testRegisterTokenShouldBeSuccessful() public {
         _secondToken = new MockToken("DAI", "DAI");
         vm.prank(_admin);
-        _guardian.registerToken(address(_secondToken), 700, 4 hours, 1000e18);
+        _guardian.registerToken(address(_secondToken), 7000, 4 hours, 1000e18);
         (uint256 minAmount, uint256 withdrawalPeriod, uint256 minLiquidityThreshold) =
             _guardian.tokenRateLimitInfo(address(_secondToken));
         assertEq(minAmount, 1000e18);
         assertEq(withdrawalPeriod, 4 hours);
-        assertEq(minLiquidityThreshold, 700);
+        assertEq(minLiquidityThreshold, 7000);
+    }
 
-        // Cannot register the same _token twice
-        vm.expectRevert();
+    function testRegisterTokenWhenMinimumLiquidityThresholdIsInvalidShouldFail() public {
+        _secondToken = new MockToken("DAI", "DAI");
         vm.prank(_admin);
-        _guardian.registerToken(address(_secondToken), 700, 4 hours, 1000e18);
+        vm.expectRevert(Guardian.InvalidMinimumLiquidityThreshold.selector);
+        _guardian.registerToken(address(_secondToken), 0, 4 hours, 1000e18);
+
+        vm.prank(_admin);
+        vm.expectRevert(Guardian.InvalidMinimumLiquidityThreshold.selector);
+        _guardian.registerToken(address(_secondToken), 10_001, 4 hours, 1000e18);
+    }
+
+    function testRegisterTokenWhenAlreadyRegisteredShouldFail() public {
+        _secondToken = new MockToken("DAI", "DAI");
+        vm.prank(_admin);
+        _guardian.registerToken(address(_secondToken), 7000, 4 hours, 1000e18);
+        // Cannot register the same _token twice
+        vm.expectRevert(Guardian.TokenAlreadyExists.selector);
+        vm.prank(_admin);
+        _guardian.registerToken(address(_secondToken), 7000, 4 hours, 1000e18);
     }
 
     function testDepositWithDrawNoLimitToken() public {
@@ -93,7 +109,7 @@ contract GuadianTest is Test {
         assertEq(_guardian.isRateLimitBreeched(address(_unlimitedToken)), false);
     }
 
-    function testDeposit() public {
+    function testDepositShouldBeSuccessful() public {
         _token.mint(_alice, 10000e18);
 
         vm.prank(_alice);
@@ -136,7 +152,7 @@ contract GuadianTest is Test {
         assertEq(tailNext, block.timestamp);
     }
 
-    function testClearBacklog() public {
+    function testClearBacklogShouldBeSuccessful() public {
         _token.mint(_alice, 10000e18);
 
         vm.prank(_alice);
@@ -172,7 +188,7 @@ contract GuadianTest is Test {
         assertEq(_guardian.tokenLiquidityTail(address(_token)), 5 hours);
     }
 
-    function testWithdrawls() public {
+    function testWithdrawlsShouldBeSuccessful() public {
         _token.mint(_alice, 10000e18);
 
         vm.prank(_alice);
@@ -203,7 +219,7 @@ contract GuadianTest is Test {
         assertEq(tailNext, block.timestamp);
     }
 
-    function testAddAndRemoveGuardedContracts() public {
+    function testAddGuardedContractsShouldBeSuccessful() public {
         MockDeFiProtocol secondDeFi = new MockDeFiProtocol();
         secondDeFi.setGuardian(address(_guardian));
 
@@ -213,6 +229,16 @@ contract GuadianTest is Test {
         _guardian.addGuardedContracts(addresses);
 
         assertEq(_guardian.isGuardedContract(address(secondDeFi)), true);
+    }
+
+    function testRemoveGuardedContractsShouldBeSuccessful() public {
+        MockDeFiProtocol secondDeFi = new MockDeFiProtocol();
+        secondDeFi.setGuardian(address(_guardian));
+
+        address[] memory addresses = new address[](1);
+        addresses[0] = address(secondDeFi);
+        vm.prank(_admin);
+        _guardian.addGuardedContracts(addresses);
 
         vm.prank(_admin);
         _guardian.removeGuardedContracts(addresses);
@@ -292,7 +318,7 @@ contract GuadianTest is Test {
         assertEq(_guardian.isRateLimited(), false);
     }
 
-    function testAdmin() public {
+    function testSetAdminShouldBeSuccessful() public {
         assertEq(_guardian.admin(), _admin);
         vm.prank(_admin);
         _guardian.setAdmin(_bob);
@@ -300,6 +326,11 @@ contract GuadianTest is Test {
 
         vm.expectRevert();
         vm.prank(_admin);
+        _guardian.setAdmin(_alice);
+    }
+
+    function testSetAdminWhenCallerIsNotAdminShouldFail() public {
+        vm.expectRevert(Guardian.NotAdmin.selector);
         _guardian.setAdmin(_alice);
     }
 }
