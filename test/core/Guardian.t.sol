@@ -34,7 +34,7 @@ contract GuadianTest is Test {
 
         vm.prank(_admin);
         // Guard USDC with 70% max drawdown per 4 hours
-        _guardian.registerToken(address(_token), 700, 4 hours, 1000e18);
+        _guardian.registerToken(address(_token), 7000, 4 hours, 1000e18);
         vm.warp(1 hours);
     }
 
