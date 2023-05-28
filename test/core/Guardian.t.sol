@@ -13,12 +13,10 @@ contract GuadianTest is Test {
     Guardian internal _guardian;
     MockDeFiProtocol internal _deFi;
 
-    // hardhat getSigner() -> vm.addr()
     address internal _alice = vm.addr(0x1);
     address internal _bob = vm.addr(0x2);
     address internal _admin = vm.addr(0x3);
 
-    // hardhat beforeEach -> setUp
     function setUp() public {
         _token = new MockToken("USDC", "USDC");
         _deFi = new MockDeFiProtocol();
