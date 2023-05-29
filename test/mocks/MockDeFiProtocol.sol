@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity 0.8.19;
 
-import "forge-std/console.sol";
-import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
-import "openzeppelin-contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
-import {IGuardian} from "./IGuardian.sol";
+import {IGuardian} from "../../src/interfaces/IGuardian.sol";
 
-contract MockDeFi {
+contract MockDeFiProtocol {
     using SafeERC20 for IERC20;
-    IGuardian guardian;
+
+    IGuardian public guardian;
 
     function setGuardian(address _guardian) external {
         guardian = IGuardian(_guardian);
