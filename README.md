@@ -7,12 +7,13 @@
 - Easy integration
 - Multiple tokens supports with custom withdrawal rate limits and periods for each token.
 - Records inflows/outflows of token and maintains a Historical Oracle of the protocol's token Liquidity.
-- Enforces withdrawal limits and periods to prevent excessive fund withdrawals (hack prevention).
+- Enforces withdrawal limits and periods to prevent total fund drainage (hack mitigation).
 - Allows the contract owner to register tokens, override limits, and transfer admin privileges.
-- Provides a convenient function for guarded contracts to record inflows and withdraw available funds.
 
 ![DeFi Guardian](https://github.com/diyahir/ETH-TOKYO-2023-Rate-Limits/assets/32445955/8de3f2f5-5085-4cd1-856c-688cc9084d06)
-![Rate Limit](https://github.com/diyahir/ETH-TOKYO-2023-Rate-Limits/assets/32445955/5a2a6603-3939-4ddc-896f-b60f3d9a9895)
+![Rate limit](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/87bf266d-7a1d-44d3-b7d1-1d6868013a2a)
+
+
 
 ## Testing
 
