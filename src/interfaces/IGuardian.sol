@@ -4,12 +4,18 @@ pragma solidity 0.8.19;
 import {LiqChangeNode, TokenRateLimitInfo} from "../static/Structs.sol";
 
 interface IGuardian {
-
     /*******************************
      * State changing functions *
      *******************************/
 
     function registerToken(
+        address _token,
+        uint256 _minLiquidityThreshold,
+        uint256 _withdrawalPeriod,
+        uint256 _minAmount
+    ) external;
+
+    function updateTokenRateLimitParams(
         address _token,
         uint256 _minLiquidityThreshold,
         uint256 _withdrawalPeriod,
@@ -42,12 +48,14 @@ interface IGuardian {
 
     function tokenLiquidityInPeriod(address token) external view returns (int256 amount);
 
-    function tokenLiquidityChanges(address token, uint256 timestamp)
-        external
-        view
-        returns (uint256 nextTimestamp, int256 withdrawalPeriod);
+    function tokenLiquidityChanges(
+        address token,
+        uint256 timestamp
+    ) external view returns (uint256 nextTimestamp, int256 withdrawalPeriod);
 
-    function tokenRateLimitInfo(address token)
+    function tokenRateLimitInfo(
+        address token
+    )
         external
         view
         returns (uint256 minAmount, uint256 withdrawPeriod, uint256 minLiquidityThreshold);
@@ -70,5 +78,7 @@ interface IGuardian {
 
     function isInGracePeriod() external view returns (bool);
 
-    function tokenRateLimitInfoExists(TokenRateLimitInfo memory tokenRLinfo) external pure returns (bool exists);
+    function tokenRateLimitInfoExists(
+        TokenRateLimitInfo memory tokenRLinfo
+    ) external pure returns (bool exists);
 }
