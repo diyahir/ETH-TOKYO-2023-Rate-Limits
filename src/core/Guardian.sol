@@ -155,6 +155,9 @@ contract Guardian is IGuardian {
         uint256 _withdrawalPeriod,
         uint256 _minAmount
     ) external onlyAdmin {
+        if (_minLiquidityThreshold == 0 || _minLiquidityThreshold > BPS_DENOMINATOR) {
+            revert InvalidMinimumLiquidityThreshold();
+        }
         TokenRateLimitInfo storage token = tokenRateLimitInfo[_token];
         if (token.minLiquidityTreshold == 0) revert TokenDoesNotExist();
         token.minLiquidityTreshold = _minLiquidityThreshold;

@@ -87,6 +87,14 @@ contract GuadianTest is Test {
         vm.prank(admin);
         vm.expectRevert(Guardian.InvalidMinimumLiquidityThreshold.selector);
         guardian.registerToken(address(secondToken), 10_001, 4 hours, 1000e18);
+
+        vm.prank(admin);
+        vm.expectRevert(Guardian.InvalidMinimumLiquidityThreshold.selector);
+        guardian.updateTokenRateLimitParams(address(secondToken), 0, 5 hours, 2000e18);
+
+        vm.prank(admin);
+        vm.expectRevert(Guardian.InvalidMinimumLiquidityThreshold.selector);
+        guardian.updateTokenRateLimitParams(address(secondToken), 10_001, 5 hours, 2000e18);
     }
 
     function testRegisterTokenWhenAlreadyRegisteredShouldFail() public {
