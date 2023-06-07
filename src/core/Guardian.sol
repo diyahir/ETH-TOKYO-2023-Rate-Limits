@@ -3,7 +3,6 @@ pragma solidity 0.8.19;
 
 import {SafeERC20} from "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
-
 import {IGuardian} from "../interfaces/IGuardian.sol";
 import {LiqChangeNode, TokenRateLimitInfo} from "../static/Structs.sol";
 
@@ -32,13 +31,7 @@ contract Guardian is IGuardian {
     /**
      * @notice Emitted when a token is registered
      */
-    event TokenRegistered(
-        address indexed token,
-        uint256 withdrawalPeriod,
-        uint256 minLiquidityThreshold,
-        uint256 minAmount
-    );
-
+    event TokenRegistered(address indexed token, uint256 minLiquidityThreshold, uint256 minAmount);
     event TokenInflow(address indexed token, uint256 indexed amount);
     event TokenRateLimitBreached(address indexed token, uint256 timestamp);
     event TokenWithdraw(address indexed token, address indexed recipient, uint256 amount);
@@ -92,7 +85,11 @@ contract Guardian is IGuardian {
 
     uint256 public lastRateLimitTimestamp;
 
-    uint256 public gracePeriod = 3 hours;
+    uint256 public gracePeriodEndTimestamp;
+
+    uint256 public withdrawalPeriod = 4 hours;
+
+    uint256 public liquidityTickLength = 5 minutes;
 
     /*******************************
      * Modifiers *
@@ -121,10 +118,16 @@ contract Guardian is IGuardian {
      * withdrawalPeriod length
      */
 
-    constructor(address _admin, uint256 _rateLimitCooldownPeriod, uint256 _gracePeriod) {
+    constructor(
+        address _admin,
+        uint256 _rateLimitCooldownPeriod,
+        uint256 _withdrawlPeriod,
+        uint64 _liquidityTickLength
+    ) {
         admin = _admin;
         rateLimitCooldownPeriod = _rateLimitCooldownPeriod;
-        gracePeriod = _gracePeriod;
+        withdrawalPeriod = _withdrawlPeriod;
+        liquidityTickLength = _liquidityTickLength;
     }
 
     /*******************************
@@ -134,7 +137,6 @@ contract Guardian is IGuardian {
     function registerToken(
         address _token,
         uint256 _minLiquidityThreshold,
-        uint256 _withdrawalPeriod,
         uint256 _minAmount
     ) external onlyAdmin {
         if (_minLiquidityThreshold == 0 || _minLiquidityThreshold > BPS_DENOMINATOR) {
@@ -144,15 +146,13 @@ contract Guardian is IGuardian {
         if (token.minLiquidityTreshold > 0) revert TokenAlreadyExists();
 
         token.minLiquidityTreshold = _minLiquidityThreshold;
-        token.withdrawalPeriod = _withdrawalPeriod;
         token.minAmount = _minAmount;
-        emit TokenRegistered(_token, _withdrawalPeriod, _minLiquidityThreshold, _minAmount);
+        emit TokenRegistered(_token, _minLiquidityThreshold, _minAmount);
     }
 
     function updateTokenRateLimitParams(
         address _token,
         uint256 _minLiquidityThreshold,
-        uint256 _withdrawalPeriod,
         uint256 _minAmount
     ) external onlyAdmin {
         if (_minLiquidityThreshold == 0 || _minLiquidityThreshold > BPS_DENOMINATOR) {
@@ -161,7 +161,6 @@ contract Guardian is IGuardian {
         TokenRateLimitInfo storage token = tokenRateLimitInfo[_token];
         if (token.minLiquidityTreshold == 0) revert TokenDoesNotExist();
         token.minLiquidityTreshold = _minLiquidityThreshold;
-        token.withdrawalPeriod = _withdrawalPeriod;
         token.minAmount = _minAmount;
 
         // if the withdrawl period is smaller, clear the backlog
@@ -192,6 +191,7 @@ contract Guardian is IGuardian {
         // create a new inflow
         LiqChangeNode memory newLiqChange;
 
+        uint256 currentTickTimestamp = getTickTimestamp(block.timestamp);
         // NOTE: Might be unsafe for huge numbers
         newLiqChange.amount = int256(_amount);
 
@@ -203,27 +203,27 @@ contract Guardian is IGuardian {
 
         // if there is no head, set the head to the new inflow
         if (tokenLiquidityHead[_token] == 0) {
-            tokenLiquidityHead[_token] = block.timestamp;
-            tokenLiquidityTail[_token] = block.timestamp;
-            tokenLiquidityChanges[_token][block.timestamp] = newLiqChange;
+            tokenLiquidityHead[_token] = currentTickTimestamp;
+            tokenLiquidityTail[_token] = currentTickTimestamp;
+            tokenLiquidityChanges[_token][currentTickTimestamp] = newLiqChange;
         } else {
             // if there is a head, check if the new inflow is within the period
             // if it is, add it to the head
             // if it is not, add it to the tail
-            if (block.timestamp - tokenLiquidityHead[_token] >= tokenRlInfo.withdrawalPeriod) {
+            if (block.timestamp - tokenLiquidityHead[_token] >= withdrawalPeriod) {
                 _traverseLinkedListUntilInPeriod(_token, block.timestamp, MAX_INT);
             }
 
             // check if tail is the same as block.timestamp (multiple txs in same block)
-            if (tokenLiquidityTail[_token] == block.timestamp) {
+            if (tokenLiquidityTail[_token] == currentTickTimestamp) {
                 // add amount
-                tokenLiquidityChanges[_token][block.timestamp].amount += newLiqChange.amount;
+                tokenLiquidityChanges[_token][currentTickTimestamp].amount += newLiqChange.amount;
             } else {
                 // add to tail
-                tokenLiquidityChanges[_token][tokenLiquidityTail[_token]].nextTimestamp = block
-                    .timestamp;
-                tokenLiquidityChanges[_token][block.timestamp] = newLiqChange;
-                tokenLiquidityTail[_token] = block.timestamp;
+                tokenLiquidityChanges[_token][tokenLiquidityTail[_token]]
+                    .nextTimestamp = currentTickTimestamp;
+                tokenLiquidityChanges[_token][currentTickTimestamp] = newLiqChange;
+                tokenLiquidityTail[_token] = currentTickTimestamp;
             }
         }
     }
@@ -242,7 +242,7 @@ contract Guardian is IGuardian {
 
         while (
             currentHeadTimestamp != 0 &&
-            _timestamp - currentHeadTimestamp >= tokenRateLimitInfo[_token].withdrawalPeriod &&
+            _timestamp - currentHeadTimestamp >= withdrawalPeriod &&
             iterations <= _maxIterations
         ) {
             LiqChangeNode memory node = tokenLiquidityChanges[_token][currentHeadTimestamp];
@@ -269,7 +269,12 @@ contract Guardian is IGuardian {
         tokenLiquidityInPeriod[_token] -= totalChange;
     }
 
-    function withdraw(address _token, uint256 _amount, address _recipient) external onlyGuarded {
+    function withdraw(
+        address _token,
+        uint256 _amount,
+        address _recipient,
+        bool _revertOnRateLimit
+    ) external onlyGuarded {
         TokenRateLimitInfo memory tokenRlInfo = tokenRateLimitInfo[_token];
 
         // Check if the token has enforced rate limited
@@ -282,6 +287,9 @@ contract Guardian is IGuardian {
         _recordTokenChange(_token, _amount, false);
         // Check if currently rate limited, if so, add to locked funds claimable when resolved
         if (isRateLimited) {
+            if (_revertOnRateLimit) {
+                revert RateLimited();
+            }
             lockedFunds[_recipient][_token] += _amount;
             return;
         }
@@ -289,6 +297,9 @@ contract Guardian is IGuardian {
         // Check if rate limit is breeched after withdrawal and not in grace period
         // (grace period allows for withdrawals to be made if rate limit is breeched but overriden)
         if (isRateLimitBreeched(_token) && !isInGracePeriod()) {
+            if (_revertOnRateLimit) {
+                revert RateLimited();
+            }
             // if it is, set rate limited to true
             isRateLimited = true;
             lastRateLimitTimestamp = block.timestamp;
@@ -328,20 +339,20 @@ contract Guardian is IGuardian {
     }
 
     function isInGracePeriod() public view returns (bool) {
-        return block.timestamp - lastRateLimitTimestamp <= gracePeriod && !isRateLimited;
+        return block.timestamp <= gracePeriodEndTimestamp;
     }
 
     /**
      * @notice Allow users to claim locked funds when rate limit is resolved
      */
-    function claimLockedFunds(address _token) external {
-        if (lockedFunds[msg.sender][_token] == 0) revert NoLockedFunds();
+    function claimLockedFunds(address _token, address _recipient) external {
+        if (lockedFunds[_recipient][_token] == 0) revert NoLockedFunds();
         if (isRateLimited) revert RateLimited();
         IERC20 erc20Token = IERC20(_token);
-        erc20Token.safeTransfer(msg.sender, lockedFunds[msg.sender][_token]);
-        lockedFunds[msg.sender][_token] = 0;
+        erc20Token.safeTransfer(_recipient, lockedFunds[_recipient][_token]);
+        lockedFunds[_recipient][_token] = 0;
 
-        emit LockedFundsClaimed(_token, msg.sender);
+        emit LockedFundsClaimed(_token, _recipient);
     }
 
     /**
@@ -361,7 +372,11 @@ contract Guardian is IGuardian {
     }
 
     function removeRateLimit() external onlyAdmin {
+        if (!isRateLimited) revert NotRateLimited();
         isRateLimited = false;
+        // Allow the grace period to extend for the full withdrawal period to not trigger rate limit again
+        // if the rate limit is removed just before the withdrawal period ends
+        gracePeriodEndTimestamp = lastRateLimitTimestamp + withdrawalPeriod;
     }
 
     function removeExpiredRateLimit() external {
@@ -388,5 +403,9 @@ contract Guardian is IGuardian {
         TokenRateLimitInfo memory tokenRlInfo
     ) public pure returns (bool exists) {
         exists = tokenRlInfo.minLiquidityTreshold > 0;
+    }
+
+    function getTickTimestamp(uint256 _timestamp) internal view returns (uint256) {
+        return _timestamp - (_timestamp % liquidityTickLength);
     }
 }

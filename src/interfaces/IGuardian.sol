@@ -11,22 +11,25 @@ interface IGuardian {
     function registerToken(
         address _token,
         uint256 _minLiquidityThreshold,
-        uint256 _withdrawalPeriod,
         uint256 _minAmount
     ) external;
 
     function updateTokenRateLimitParams(
         address _token,
         uint256 _minLiquidityThreshold,
-        uint256 _withdrawalPeriod,
         uint256 _minAmount
     ) external;
 
     function recordInflow(address _token, uint256 _amount) external;
 
-    function withdraw(address _token, uint256 _amount, address _recipient) external;
+    function withdraw(
+        address _token,
+        uint256 _amount,
+        address _recipient,
+        bool _revertOnRateLimit
+    ) external;
 
-    function claimLockedFunds(address _token) external;
+    function claimLockedFunds(address _token, address _recipient) external;
 
     function clearBackLog(address _token, uint256 _maxIterations) external;
 
@@ -55,10 +58,7 @@ interface IGuardian {
 
     function tokenRateLimitInfo(
         address token
-    )
-        external
-        view
-        returns (uint256 minAmount, uint256 withdrawPeriod, uint256 minLiquidityThreshold);
+    ) external view returns (uint256 minAmount, uint256 minLiquidityThreshold);
 
     function lockedFunds(address recipient, address token) external view returns (uint256 amount);
 
@@ -72,7 +72,7 @@ interface IGuardian {
 
     function lastRateLimitTimestamp() external view returns (uint256);
 
-    function gracePeriod() external view returns (uint256);
+    function gracePeriodEndTimestamp() external view returns (uint256);
 
     function isRateLimitBreeched(address _token) external view returns (bool);
 
