@@ -1034,8 +1034,8 @@
       }
     },
     "src/core/Guardian.sol": {
-      "lastModificationDate": 1685422363179,
-      "contentHash": "57381ae0075bd17ec9be8795632fd20b",
+      "lastModificationDate": 1686113786644,
+      "contentHash": "a27e52c512c515342faefa9d500dcd39",
       "sourceName": "src/core/Guardian.sol",
       "solcConfig": {
         "settings": {
@@ -1081,8 +1081,8 @@
       }
     },
     "src/interfaces/IGuardian.sol": {
-      "lastModificationDate": 1685421767204,
-      "contentHash": "a29d19e32af1b7aabd81b8554a92df6e",
+      "lastModificationDate": 1686033833881,
+      "contentHash": "8043832aca018ff733dcf9c99b74497d",
       "sourceName": "src/interfaces/IGuardian.sol",
       "solcConfig": {
         "settings": {
@@ -1163,8 +1163,8 @@
       }
     },
     "test/core/Guardian.t.sol": {
-      "lastModificationDate": 1685423485710,
-      "contentHash": "e43a9aa69c554968f46b5bab0857eca1",
+      "lastModificationDate": 1686114919877,
+      "contentHash": "e38fbd848ab2461beef577f3dba5cbc3",
       "sourceName": "test/core/Guardian.t.sol",
       "solcConfig": {
         "settings": {
@@ -1233,8 +1233,8 @@
       }
     },
     "test/mocks/MockDeFiProtocol.sol": {
-      "lastModificationDate": 1685341103149,
-      "contentHash": "08a9c26b97e9e6077828e34cec8118fa",
+      "lastModificationDate": 1686033639791,
+      "contentHash": "6a5165c9d076af2899a356e0f676866a",
       "sourceName": "test/mocks/MockDeFiProtocol.sol",
       "solcConfig": {
         "settings": {

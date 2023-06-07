@@ -1,6 +1,6 @@
 # DeFi Guardian: Token rate-limits for your DeFi Protocol
-![Defi_Guardian11](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/10442269/10ee3de0-ff92-4d1d-8557-1d859c91199c)
 
+![Defi_Guardian11](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/10442269/10ee3de0-ff92-4d1d-8557-1d859c91199c)
 
 ## Features
 
@@ -14,8 +14,6 @@
 
 ![DeFi Guardian](https://github.com/diyahir/ETH-TOKYO-2023-Rate-Limits/assets/32445955/8de3f2f5-5085-4cd1-856c-688cc9084d06)
 ![Rate limit](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/87bf266d-7a1d-44d3-b7d1-1d6868013a2a)
-
-
 
 ## Testing
 
@@ -45,7 +43,7 @@ There are three easy points of integration that you must do to have your protoco
 3. Withdraw Token integration
 4. Set the Contract as a guarded contract on your Guardian
 
-#### Example Integration
+#### Example Guardian Integration
 
 ```bash
 contract MockDeFi {
@@ -64,6 +62,26 @@ contract MockDeFi {
     function withdraw(address token, uint256 amount) external {
         IERC20(token).safeTransfer(address(guardian), amount);
         guardian.withdraw(token, amount, msg.sender);
+    }
+}
+```
+
+#### Example smart contract consumer
+
+```bash
+contract MockDeFiConsumer {
+    IGuardian guardian;
+    MockDeFi defi;
+
+    error RateLimited();
+
+    function withdraw(address token, uint256 amount) external {
+        defi.withdraw(address token, uint256 amount);
+        if(guardian.isRateLimited()){
+            revert RateLimited()
+        }
+        # If there is no revertOnRateLimit flag be the defi protocol
+        # You need to revert in your smart contract to have consistent accounting
     }
 }
 ```

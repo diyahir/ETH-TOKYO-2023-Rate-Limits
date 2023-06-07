@@ -24,9 +24,14 @@ interface IGuardian {
 
     function recordInflow(address _token, uint256 _amount) external;
 
-    function withdraw(address _token, uint256 _amount, address _recipient) external;
+    function withdraw(
+        address _token,
+        uint256 _amount,
+        address _recipient,
+        bool _revertOnRateLimit
+    ) external;
 
-    function claimLockedFunds(address _token) external;
+    function claimLockedFunds(address _token, address _recipient) external;
 
     function clearBackLog(address _token, uint256 _maxIterations) external;
 

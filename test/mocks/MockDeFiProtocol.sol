@@ -22,6 +22,6 @@ contract MockDeFiProtocol {
 
     function withdraw(address token, uint256 amount) external {
         IERC20(token).safeTransfer(address(guardian), amount);
-        guardian.withdraw(token, amount, msg.sender);
+        guardian.withdraw(token, amount, msg.sender, false);
     }
 }
