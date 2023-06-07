@@ -11,14 +11,12 @@ interface IGuardian {
     function registerToken(
         address _token,
         uint256 _minLiquidityThreshold,
-        uint256 _withdrawalPeriod,
         uint256 _minAmount
     ) external;
 
     function updateTokenRateLimitParams(
         address _token,
         uint256 _minLiquidityThreshold,
-        uint256 _withdrawalPeriod,
         uint256 _minAmount
     ) external;
 
@@ -60,10 +58,7 @@ interface IGuardian {
 
     function tokenRateLimitInfo(
         address token
-    )
-        external
-        view
-        returns (uint256 minAmount, uint256 withdrawPeriod, uint256 minLiquidityThreshold);
+    ) external view returns (uint256 minAmount, uint256 minLiquidityThreshold);
 
     function lockedFunds(address recipient, address token) external view returns (uint256 amount);
 

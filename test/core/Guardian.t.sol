@@ -20,7 +20,7 @@ contract GuadianTest is Test {
     function setUp() public {
         token = new MockToken("USDC", "USDC");
         deFi = new MockDeFiProtocol();
-        guardian = new Guardian(admin, 3 days, 3 hours, 5 minutes);
+        guardian = new Guardian(admin, 3 days, 4 hours, 5 minutes);
 
         deFi.setGuardian(address(guardian));
 
@@ -32,7 +32,7 @@ contract GuadianTest is Test {
 
         vm.prank(admin);
         // Guard USDC with 70% max drawdown per 4 hours
-        guardian.registerToken(address(token), 7000, 4 hours, 1000e18);
+        guardian.registerToken(address(token), 7000, 1000e18);
         vm.warp(1 hours);
     }
 
@@ -61,20 +61,17 @@ contract GuadianTest is Test {
     function testRegisterTokenShouldBeSuccessful() public {
         secondToken = new MockToken("DAI", "DAI");
         vm.prank(admin);
-        guardian.registerToken(address(secondToken), 7000, 4 hours, 1000e18);
-        (uint256 minAmount, uint256 withdrawalPeriod, uint256 minLiquidityThreshold) = guardian
-            .tokenRateLimitInfo(address(secondToken));
+        guardian.registerToken(address(secondToken), 7000, 1000e18);
+        (uint256 minAmount, uint256 minLiquidityThreshold) = guardian.tokenRateLimitInfo(
+            address(secondToken)
+        );
         assertEq(minAmount, 1000e18);
-        assertEq(withdrawalPeriod, 4 hours);
         assertEq(minLiquidityThreshold, 7000);
 
         vm.prank(admin);
-        guardian.updateTokenRateLimitParams(address(secondToken), 8000, 5 hours, 2000e18);
-        (minAmount, withdrawalPeriod, minLiquidityThreshold) = guardian.tokenRateLimitInfo(
-            address(secondToken)
-        );
+        guardian.updateTokenRateLimitParams(address(secondToken), 8000, 2000e18);
+        (minAmount, minLiquidityThreshold) = guardian.tokenRateLimitInfo(address(secondToken));
         assertEq(minAmount, 2000e18);
-        assertEq(withdrawalPeriod, 5 hours);
         assertEq(minLiquidityThreshold, 8000);
     }
 
@@ -82,29 +79,29 @@ contract GuadianTest is Test {
         secondToken = new MockToken("DAI", "DAI");
         vm.prank(admin);
         vm.expectRevert(Guardian.InvalidMinimumLiquidityThreshold.selector);
-        guardian.registerToken(address(secondToken), 0, 4 hours, 1000e18);
+        guardian.registerToken(address(secondToken), 0, 1000e18);
 
         vm.prank(admin);
         vm.expectRevert(Guardian.InvalidMinimumLiquidityThreshold.selector);
-        guardian.registerToken(address(secondToken), 10_001, 4 hours, 1000e18);
+        guardian.registerToken(address(secondToken), 10_001, 1000e18);
 
         vm.prank(admin);
         vm.expectRevert(Guardian.InvalidMinimumLiquidityThreshold.selector);
-        guardian.updateTokenRateLimitParams(address(secondToken), 0, 5 hours, 2000e18);
+        guardian.updateTokenRateLimitParams(address(secondToken), 0, 2000e18);
 
         vm.prank(admin);
         vm.expectRevert(Guardian.InvalidMinimumLiquidityThreshold.selector);
-        guardian.updateTokenRateLimitParams(address(secondToken), 10_001, 5 hours, 2000e18);
+        guardian.updateTokenRateLimitParams(address(secondToken), 10_001, 2000e18);
     }
 
     function testRegisterTokenWhenAlreadyRegisteredShouldFail() public {
         secondToken = new MockToken("DAI", "DAI");
         vm.prank(admin);
-        guardian.registerToken(address(secondToken), 7000, 4 hours, 1000e18);
+        guardian.registerToken(address(secondToken), 7000, 1000e18);
         // Cannot register the same token twice
         vm.expectRevert(Guardian.TokenAlreadyExists.selector);
         vm.prank(admin);
-        guardian.registerToken(address(secondToken), 7000, 4 hours, 1000e18);
+        guardian.registerToken(address(secondToken), 7000, 1000e18);
     }
 
     function testDepositWithDrawNoLimitToken() public {

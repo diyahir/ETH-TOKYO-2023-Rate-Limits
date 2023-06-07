@@ -31,13 +31,7 @@ contract Guardian is IGuardian {
     /**
      * @notice Emitted when a token is registered
      */
-    event TokenRegistered(
-        address indexed token,
-        uint256 withdrawalPeriod,
-        uint256 minLiquidityThreshold,
-        uint256 minAmount
-    );
-
+    event TokenRegistered(address indexed token, uint256 minLiquidityThreshold, uint256 minAmount);
     event TokenInflow(address indexed token, uint256 indexed amount);
     event TokenRateLimitBreached(address indexed token, uint256 timestamp);
     event TokenWithdraw(address indexed token, address indexed recipient, uint256 amount);
@@ -93,6 +87,8 @@ contract Guardian is IGuardian {
 
     uint256 public gracePeriod = 3 hours;
 
+    uint256 public withdrawalPeriod = 4 hours;
+
     uint256 public liquidityTickLength = 5 minutes;
 
     /*******************************
@@ -125,12 +121,12 @@ contract Guardian is IGuardian {
     constructor(
         address _admin,
         uint256 _rateLimitCooldownPeriod,
-        uint256 _gracePeriod,
+        uint256 _withdrawlPeriod,
         uint64 _liquidityTickLength
     ) {
         admin = _admin;
         rateLimitCooldownPeriod = _rateLimitCooldownPeriod;
-        gracePeriod = _gracePeriod;
+        withdrawalPeriod = _withdrawlPeriod;
         liquidityTickLength = _liquidityTickLength;
     }
 
@@ -141,7 +137,6 @@ contract Guardian is IGuardian {
     function registerToken(
         address _token,
         uint256 _minLiquidityThreshold,
-        uint256 _withdrawalPeriod,
         uint256 _minAmount
     ) external onlyAdmin {
         if (_minLiquidityThreshold == 0 || _minLiquidityThreshold > BPS_DENOMINATOR) {
@@ -151,15 +146,13 @@ contract Guardian is IGuardian {
         if (token.minLiquidityTreshold > 0) revert TokenAlreadyExists();
 
         token.minLiquidityTreshold = _minLiquidityThreshold;
-        token.withdrawalPeriod = _withdrawalPeriod;
         token.minAmount = _minAmount;
-        emit TokenRegistered(_token, _withdrawalPeriod, _minLiquidityThreshold, _minAmount);
+        emit TokenRegistered(_token, _minLiquidityThreshold, _minAmount);
     }
 
     function updateTokenRateLimitParams(
         address _token,
         uint256 _minLiquidityThreshold,
-        uint256 _withdrawalPeriod,
         uint256 _minAmount
     ) external onlyAdmin {
         if (_minLiquidityThreshold == 0 || _minLiquidityThreshold > BPS_DENOMINATOR) {
@@ -168,7 +161,6 @@ contract Guardian is IGuardian {
         TokenRateLimitInfo storage token = tokenRateLimitInfo[_token];
         if (token.minLiquidityTreshold == 0) revert TokenDoesNotExist();
         token.minLiquidityTreshold = _minLiquidityThreshold;
-        token.withdrawalPeriod = _withdrawalPeriod;
         token.minAmount = _minAmount;
 
         // if the withdrawl period is smaller, clear the backlog
@@ -218,7 +210,7 @@ contract Guardian is IGuardian {
             // if there is a head, check if the new inflow is within the period
             // if it is, add it to the head
             // if it is not, add it to the tail
-            if (block.timestamp - tokenLiquidityHead[_token] >= tokenRlInfo.withdrawalPeriod) {
+            if (block.timestamp - tokenLiquidityHead[_token] >= withdrawalPeriod) {
                 _traverseLinkedListUntilInPeriod(_token, block.timestamp, MAX_INT);
             }
 
@@ -250,7 +242,7 @@ contract Guardian is IGuardian {
 
         while (
             currentHeadTimestamp != 0 &&
-            _timestamp - currentHeadTimestamp >= tokenRateLimitInfo[_token].withdrawalPeriod &&
+            _timestamp - currentHeadTimestamp >= withdrawalPeriod &&
             iterations <= _maxIterations
         ) {
             LiqChangeNode memory node = tokenLiquidityChanges[_token][currentHeadTimestamp];
