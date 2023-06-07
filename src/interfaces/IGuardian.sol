@@ -72,7 +72,7 @@ interface IGuardian {
 
     function lastRateLimitTimestamp() external view returns (uint256);
 
-    function gracePeriod() external view returns (uint256);
+    function gracePeriodEndTimestamp() external view returns (uint256);
 
     function isRateLimitBreeched(address _token) external view returns (bool);
 

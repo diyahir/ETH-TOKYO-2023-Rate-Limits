@@ -85,7 +85,7 @@ contract Guardian is IGuardian {
 
     uint256 public lastRateLimitTimestamp;
 
-    uint256 public gracePeriod = 3 hours;
+    uint256 public gracePeriodEndTimestamp;
 
     uint256 public withdrawalPeriod = 4 hours;
 
@@ -339,7 +339,7 @@ contract Guardian is IGuardian {
     }
 
     function isInGracePeriod() public view returns (bool) {
-        return block.timestamp - lastRateLimitTimestamp <= gracePeriod && !isRateLimited;
+        return block.timestamp <= gracePeriodEndTimestamp;
     }
 
     /**
@@ -372,7 +372,11 @@ contract Guardian is IGuardian {
     }
 
     function removeRateLimit() external onlyAdmin {
+        if (!isRateLimited) revert NotRateLimited();
         isRateLimited = false;
+        // Allow the grace period to extend for the full withdrawal period to not trigger rate limit again
+        // if the rate limit is removed just before the withdrawal period ends
+        gracePeriodEndTimestamp = lastRateLimitTimestamp + withdrawalPeriod;
     }
 
     function removeExpiredRateLimit() external {

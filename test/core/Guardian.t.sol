@@ -40,7 +40,6 @@ contract GuadianTest is Test {
         Guardian newGuardian = new Guardian(admin, 3 days, 3 hours, 5 minutes);
         assertEq(newGuardian.admin(), admin);
         assertEq(newGuardian.rateLimitCooldownPeriod(), 3 days);
-        assertEq(newGuardian.gracePeriod(), 3 hours);
     }
 
     function testMint() public {
