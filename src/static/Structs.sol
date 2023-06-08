@@ -6,12 +6,12 @@ struct LiqChangeNode {
     int256 amount;
 }
 
-struct TokenRateLimitInfo {
-    // minimum amount to be considered for rate limiting operations
-    uint256 minAmount;
-    // Rate limit threshold in basis points.
-    // Example 7000 - at least 70% of the liquidity should stay in the contract,
-    // withdrawals with more than 30% of the liquidity will trigger the rate limit.
-    // This represents the minimum liquidity that should stay in the contract.
-    uint256 minLiquidityTreshold;
+struct Limiter {
+    uint256 minLiqRetainedBps;
+    uint256 limitBeginThreshold;
+    int256 liqTotal;
+    int256 liqInPeriod;
+    uint256 listHead;
+    uint256 listTail;
+    mapping(uint256 tick => LiqChangeNode node) listNodes;
 }

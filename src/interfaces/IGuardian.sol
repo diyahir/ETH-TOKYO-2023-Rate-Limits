@@ -1,33 +1,22 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {LiqChangeNode, TokenRateLimitInfo} from "../static/Structs.sol";
+import {LiqChangeNode} from "../static/Structs.sol";
 
 interface IGuardian {
-    /*******************************
+    /**
+     *
      * State changing functions *
-     *******************************/
+     *
+     */
 
-    function registerToken(
-        address _token,
-        uint256 _minLiquidityThreshold,
-        uint256 _minAmount
-    ) external;
+    function registerToken(address _token, uint256 _minLiquidityThreshold, uint256 _minAmount) external;
 
-    function updateTokenRateLimitParams(
-        address _token,
-        uint256 _minLiquidityThreshold,
-        uint256 _minAmount
-    ) external;
+    function updateTokenRateLimitParams(address _token, uint256 _minLiquidityThreshold, uint256 _minAmount) external;
 
     function recordInflow(address _token, uint256 _amount) external;
 
-    function withdraw(
-        address _token,
-        uint256 _amount,
-        address _recipient,
-        bool _revertOnRateLimit
-    ) external;
+    function withdraw(address _token, uint256 _amount, address _recipient, bool _revertOnRateLimit) external;
 
     function claimLockedFunds(address _token, address _recipient) external;
 
@@ -43,22 +32,23 @@ interface IGuardian {
 
     function removeGuardedContracts(address[] calldata _guardedContracts) external;
 
-    /*******************************
+    /**
+     *
      * Read-only functions *
-     *******************************/
+     *
+     */
 
-    function tokenLiquidityTotal(address token) external view returns (int256 amount);
-
-    function tokenLiquidityInPeriod(address token) external view returns (int256 amount);
-
-    function tokenLiquidityChanges(
-        address token,
-        uint256 timestamp
-    ) external view returns (uint256 nextTimestamp, int256 withdrawalPeriod);
-
-    function tokenRateLimitInfo(
-        address token
-    ) external view returns (uint256 minAmount, uint256 minLiquidityThreshold);
+    function tokenLimiters(address token)
+        external
+        view
+        returns (
+            uint256 minLiqRetainedBps,
+            uint256 limitBeginThreshold,
+            int256 liqTotal,
+            int256 liqInPeriod,
+            uint256 listHead,
+            uint256 listTail
+        );
 
     function lockedFunds(address recipient, address token) external view returns (uint256 amount);
 
@@ -77,8 +67,4 @@ interface IGuardian {
     function isRateLimitBreeched(address _token) external view returns (bool);
 
     function isInGracePeriod() external view returns (bool);
-
-    function tokenRateLimitInfoExists(
-        TokenRateLimitInfo memory tokenRLinfo
-    ) external pure returns (bool exists);
 }
