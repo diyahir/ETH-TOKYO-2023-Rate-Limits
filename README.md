@@ -8,7 +8,7 @@
 - Performant Codebase
 - Easy integration
 - Multiple tokens supports with custom withdrawal rate limits and periods for each token.
-- Records inflows/outflows of token and maintains a Historical Oracle of the protocol's token Liquidity.
+- Records inflows/outflows of token and maintains a Historical running total of the protocol's token liquidity.
 - Enforces withdrawal limits and periods to prevent total fund drainage (hack mitigation).
 - Allows the contract owner to register tokens, override limits, and transfer admin privileges.
 
@@ -71,7 +71,7 @@ contract MockDeFi {
 ```bash
 contract MockDeFiConsumer {
     IGuardian guardian;
-    MockDeFi defi;
+    IMockDeFi defi;
 
     error RateLimited();
 
