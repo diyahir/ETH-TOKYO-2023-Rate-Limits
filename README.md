@@ -8,14 +8,16 @@
 - Performant Codebase
 - Easy integration
 - Multiple tokens supports with custom withdrawal rate limits and periods for each token.
-- Records inflows/outflows of token and maintains a Historical Oracle of the protocol's token Liquidity.
+- Records inflows/outflows of token and maintains a Historical running total of the protocol's token liquidity.
 - Enforces withdrawal limits and periods to prevent total fund drainage (hack mitigation).
 - Allows the contract owner to register tokens, override limits, and transfer admin privileges.
 
-![DeFi Guardian](https://github.com/diyahir/ETH-TOKYO-2023-Rate-Limits/assets/32445955/8de3f2f5-5085-4cd1-856c-688cc9084d06)
+
 ![Rate limit](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/87bf266d-7a1d-44d3-b7d1-1d6868013a2a)
+![DeFi Guardian](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/07c89cad-2045-448c-b1d9-bd93ab804253)
 
 ## Testing
+
 
 ```bash
 forge test
@@ -71,7 +73,7 @@ contract MockDeFi {
 ```bash
 contract MockDeFiConsumer {
     IGuardian guardian;
-    MockDeFi defi;
+    IMockDeFi defi;
 
     error RateLimited();
 

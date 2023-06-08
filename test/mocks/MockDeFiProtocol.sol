@@ -24,4 +24,9 @@ contract MockDeFiProtocol {
         IERC20(token).safeTransfer(address(guardian), amount);
         guardian.withdraw(token, amount, msg.sender, false);
     }
+
+    // Used to compare gas usage with and without guardian
+    function depositNoGuardian(address token, uint256 amount) external {
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+    }
 }

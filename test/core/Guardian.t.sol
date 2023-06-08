@@ -397,4 +397,13 @@ contract GuadianTest is Test {
         assertEq(nextTimestamp, 0);
         assertEq(amount, -1e18);
     }
+
+    function testDepositsFuzzed(uint256 amount) public {
+        // used to test compare gas costs of deposits
+        token.mint(alice, amount);
+        vm.prank(alice);
+        token.approve(address(deFi), amount);
+        vm.prank(alice);
+        deFi.depositNoGuardian(address(token), amount);
+    }
 }
