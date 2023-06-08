@@ -11,52 +11,9 @@ contract Guardian is IGuardian {
     using SafeERC20 for IERC20;
     using LimiterLib for Limiter;
 
-    /**
-     *
-     * Errors *
-     *
-     */
-
-    error NotAGuardedContract();
-    error NotAdmin();
-    error InvalidAdminAddress();
-    error NoLockedFunds();
-    error RateLimited();
-    error NotRateLimited();
-    error CooldownPeriodNotReached();
-
-    /**
-     *
-     * Events *
-     *
-     */
-
-    /**
-     * @notice Emitted when a token is registered
-     */
-    event TokenRegistered(address indexed token, uint256 minKeepBps, uint256 limitBeginThreshold);
-    event TokenInflow(address indexed token, uint256 indexed amount);
-    event TokenRateLimitBreached(address indexed token, uint256 timestamp);
-    event TokenWithdraw(address indexed token, address indexed recipient, uint256 amount);
-    event LockedFundsClaimed(address indexed token, address indexed recipient);
-    event TokenBacklogCleaned(address indexed token, uint256 timestamp);
-    event AdminSet(address indexed newAdmin);
-
-    /**
-     *
-     * Constants *
-     *
-     */
-
-    uint256 public constant BPS_DENOMINATOR = 10000;
-
-    uint256 public constant MAX_INT = 2 ** 64 - 1;
-
-    /**
-     *
-     * State vars *
-     *
-     */
+    ////////////////////////////////////////////////////////////////
+    //                      STATE VARIABLES                       //
+    ////////////////////////////////////////////////////////////////
 
     mapping(address => Limiter limiter) public tokenLimiters;
 
@@ -81,11 +38,36 @@ contract Guardian is IGuardian {
 
     uint256 public immutable TICK_LENGTH;
 
+    ////////////////////////////////////////////////////////////////
+    //                           EVENTS                           //
+    ////////////////////////////////////////////////////////////////
+
     /**
-     *
-     * Modifiers *
-     *
+     * @notice Emitted when a token is registered
      */
+    event TokenRegistered(address indexed token, uint256 minKeepBps, uint256 limitBeginThreshold);
+    event TokenInflow(address indexed token, uint256 indexed amount);
+    event TokenRateLimitBreached(address indexed token, uint256 timestamp);
+    event TokenWithdraw(address indexed token, address indexed recipient, uint256 amount);
+    event LockedFundsClaimed(address indexed token, address indexed recipient);
+    event TokenBacklogCleaned(address indexed token, uint256 timestamp);
+    event AdminSet(address indexed newAdmin);
+
+    ////////////////////////////////////////////////////////////////
+    //                           ERRORS                           //
+    ////////////////////////////////////////////////////////////////
+
+    error NotAGuardedContract();
+    error NotAdmin();
+    error InvalidAdminAddress();
+    error NoLockedFunds();
+    error RateLimited();
+    error NotRateLimited();
+    error CooldownPeriodNotReached();
+
+    ////////////////////////////////////////////////////////////////
+    //                         MODIFIERS                          //
+    ////////////////////////////////////////////////////////////////
 
     modifier onlyGuarded() {
         if (!isGuardedContract[msg.sender]) revert NotAGuardedContract();
@@ -98,12 +80,6 @@ contract Guardian is IGuardian {
     }
 
     /**
-     *
-     * Constructor *
-     *
-     */
-
-    /**
      * @notice gracePeriod refers to the time after a rate limit breech and then overriden where withdrawals are
      * still allowed.
      * @dev For example a false positive rate limit breech, then it is overriden, so withdrawals are still
@@ -111,7 +87,6 @@ contract Guardian is IGuardian {
      * Before the rate limit is enforced again, it should be set to be at least your largest
      * withdrawalPeriod length
      */
-
     constructor(
         address _admin,
         uint256 _rateLimitCooldownPeriod,
@@ -198,14 +173,6 @@ contract Guardian is IGuardian {
         emit TokenWithdraw(_token, _recipient, _amount);
     }
 
-    function isRateLimitBreeched(address _token) public view returns (bool) {
-        return tokenLimiters[_token].status() == LimitStatus.Breeched;
-    }
-
-    function isInGracePeriod() public view returns (bool) {
-        return block.timestamp <= gracePeriodEndTimestamp;
-    }
-
     /**
      * @notice Allow users to claim locked funds when rate limit is resolved
      */
@@ -272,5 +239,13 @@ contract Guardian is IGuardian {
         LiqChangeNode storage node = tokenLimiters[_token].listNodes[_tickTimestamp];
         nextTimestamp = node.nextTimestamp;
         amount = node.amount;
+    }
+
+    function isRateLimitBreeched(address _token) public view returns (bool) {
+        return tokenLimiters[_token].status() == LimitStatus.Breeched;
+    }
+
+    function isInGracePeriod() public view returns (bool) {
+        return block.timestamp <= gracePeriodEndTimestamp;
     }
 }

@@ -36,10 +36,6 @@ library LimiterLib {
         limiter.limitBeginThreshold = limitBeginThreshold;
     }
 
-    function initialized(Limiter storage limiter) internal view returns (bool) {
-        return limiter.minLiqRetainedBps > 0;
-    }
-
     function recordChange(Limiter storage limiter, int256 amount, uint256 withdrawalPeriod, uint256 tickLength)
         internal
     {
@@ -126,6 +122,10 @@ library LimiterLib {
         int256 minLiq = (currentLiq * int256(limiter.minLiqRetainedBps)) / int256(BPS_DENOMINATOR);
 
         return futureLiq < minLiq ? LimitStatus.Breeched : LimitStatus.Ok;
+    }
+
+    function initialized(Limiter storage limiter) internal view returns (bool) {
+        return limiter.minLiqRetainedBps > 0;
     }
 
     function getTickTimestamp(uint256 t, uint256 tickLength) internal pure returns (uint256) {

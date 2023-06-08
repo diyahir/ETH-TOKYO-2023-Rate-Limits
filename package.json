@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "prettier": "prettier --write 'src/**/*.sol' 'test/*.sol'",
+    "format": "forge fmt",
     "solhint": "solhint --config ./.solhint.json 'src/**/*.sol' --fix",
-    "lint": "npm run prettier && npm run solhint"
+    "lint": "forge fmt && npm run solhint"
   },
   "devDependencies": {
     "prettier": "^2.5.1",
