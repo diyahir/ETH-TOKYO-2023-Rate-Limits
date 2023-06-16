@@ -7,7 +7,7 @@ import {MockDeFiProtocol} from "../mocks/MockDeFiProtocol.sol";
 import {CircuitBreaker} from "src/core/CircuitBreaker.sol";
 import {LimiterLib} from "src/utils/LimiterLib.sol";
 
-contract GuadianTest is Test {
+contract CircuitBreakerTest is Test {
     MockToken internal token;
     MockToken internal secondToken;
     MockToken internal unlimitedToken;
