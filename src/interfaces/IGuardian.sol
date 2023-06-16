@@ -10,13 +10,26 @@ interface IGuardian {
      *
      */
 
-    function registerToken(address _token, uint256 _minLiquidityThreshold, uint256 _minAmount) external;
+    function registerToken(
+        address _token,
+        uint256 _minLiquidityThreshold,
+        uint256 _minAmount
+    ) external;
 
-    function updateTokenRateLimitParams(address _token, uint256 _minLiquidityThreshold, uint256 _minAmount) external;
+    function updateTokenRateLimitParams(
+        address _token,
+        uint256 _minLiquidityThreshold,
+        uint256 _minAmount
+    ) external;
 
-    function recordInflow(address _token, uint256 _amount) external;
+    function depositHook(address _token, uint256 _amount) external;
 
-    function withdraw(address _token, uint256 _amount, address _recipient, bool _revertOnRateLimit) external;
+    function withdrawalHook(
+        address _token,
+        uint256 _amount,
+        address _recipient,
+        bool _revertOnRateLimit
+    ) external;
 
     function claimLockedFunds(address _token, address _recipient) external;
 
@@ -38,7 +51,9 @@ interface IGuardian {
      *
      */
 
-    function tokenLimiters(address token)
+    function tokenLimiters(
+        address token
+    )
         external
         view
         returns (

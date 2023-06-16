@@ -103,18 +103,20 @@ contract Guardian is IGuardian {
     //                         FUNCTIONS                          //
     ////////////////////////////////////////////////////////////////
 
-    function registerToken(address _token, uint256 _minLiqRetainedBps, uint256 _limitBeginThreshold)
-        external
-        onlyAdmin
-    {
+    function registerToken(
+        address _token,
+        uint256 _minLiqRetainedBps,
+        uint256 _limitBeginThreshold
+    ) external onlyAdmin {
         tokenLimiters[_token].init(_minLiqRetainedBps, _limitBeginThreshold);
         emit TokenRegistered(_token, _minLiqRetainedBps, _limitBeginThreshold);
     }
 
-    function updateTokenRateLimitParams(address _token, uint256 _minLiqRetainedBps, uint256 _limitBeginThreshold)
-        external
-        onlyAdmin
-    {
+    function updateTokenRateLimitParams(
+        address _token,
+        uint256 _minLiqRetainedBps,
+        uint256 _limitBeginThreshold
+    ) external onlyAdmin {
         Limiter storage limiter = tokenLimiters[_token];
         limiter.updateParams(_minLiqRetainedBps, _limitBeginThreshold);
         limiter.sync(WITHDRAWAL_PERIOD);
@@ -123,16 +125,18 @@ contract Guardian is IGuardian {
     /**
      * @dev Give guarded contracts one function to call for convenience
      */
-    function recordInflow(address _token, uint256 _amount) external onlyGuarded {
+    function depositHook(address _token, uint256 _amount) external onlyGuarded {
         /// @dev uint256 could overflow into negative
         tokenLimiters[_token].recordChange(int256(_amount), WITHDRAWAL_PERIOD, TICK_LENGTH);
         emit TokenInflow(_token, _amount);
     }
 
-    function withdraw(address _token, uint256 _amount, address _recipient, bool _revertOnRateLimit)
-        external
-        onlyGuarded
-    {
+    function withdrawalHook(
+        address _token,
+        uint256 _amount,
+        address _recipient,
+        bool _revertOnRateLimit
+    ) external onlyGuarded {
         Limiter storage limiter = tokenLimiters[_token];
         // Check if the token has enforced rate limited
         if (!limiter.initialized()) {
@@ -231,11 +235,10 @@ contract Guardian is IGuardian {
         }
     }
 
-    function tokenLiquidityChanges(address _token, uint256 _tickTimestamp)
-        external
-        view
-        returns (uint256 nextTimestamp, int256 amount)
-    {
+    function tokenLiquidityChanges(
+        address _token,
+        uint256 _tickTimestamp
+    ) external view returns (uint256 nextTimestamp, int256 amount) {
         LiqChangeNode storage node = tokenLimiters[_token].listNodes[_tickTimestamp];
         nextTimestamp = node.nextTimestamp;
         amount = node.amount;

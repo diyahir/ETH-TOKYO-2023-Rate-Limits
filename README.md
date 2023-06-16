@@ -12,29 +12,14 @@
 - Enforces withdrawal limits and periods to prevent total fund drainage (hack mitigation).
 - Allows the contract owner to register tokens, override limits, and transfer admin privileges.
 
-
 ![Rate limit](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/87bf266d-7a1d-44d3-b7d1-1d6868013a2a)
 ![DeFi Guardian](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/07c89cad-2045-448c-b1d9-bd93ab804253)
 
 ## Testing
 
-
 ```bash
 forge test
 ```
-
-## Code Coverage
-
-```bash
-forge coverage
-```
-
-| File                     | % Lines         | % Statements      | % Branches     | % Funcs        |
-| ------------------------ | --------------- | ----------------- | -------------- | -------------- |
-| src/Guardian.sol         | 100.00% (89/89) | 100.00% (99/99)   | 85.29% (29/34) | 93.33% (14/15) |
-| src/MockDeFiProtocol.sol | 100.00% (5/5)   | 100.00% (5/5)     | 100.00% (0/0)  | 100.00% (3/3)  |
-| src/MockToken.sol        | 100.00% (2/2)   | 100.00% (2/2)     | 100.00% (0/0)  | 100.00% (2/2)  |
-| Total                    | 100.00% (96/96) | 100.00% (106/106) | 85.29% (29/34) | 95.00% (19/20) |
 
 ## Integration
 
@@ -48,24 +33,31 @@ There are three easy points of integration that you must do to have your protoco
 #### Example Guardian Integration
 
 ```bash
-contract MockDeFi {
+contract MockDeFiProtocol is GuardedContract {
     using SafeERC20 for IERC20;
-    IGuardian guardian;
 
-    function setGuardian(address _guardian) external {
-        guardian = IGuardian(_guardian);
+    constructor(address _guardian) GuardedContract(_guardian) {}
+
+    /*
+     * @notice Use _depositHook to safe transfer tokens and record inflow to circuit-breaker
+     */
+    function deposit(address _token, uint256 _amount) external {
+        _depositHook(_token, msg.sender, address(this), _amount);
+
+        // Your logic here
     }
 
-    function deposit(address token, uint256 amount) external {
-        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        guardian.recordInflow(token, amount);
+    /*
+     * @notice Withdrawal hook for circuit breaker to safe transfer tokens and enforcement
+     */
+    function withdrawal(address _token, uint256 _amount) external {
+        //  Your logic here
+
+        _withdrawalHook(_token, _amount, msg.sender, false);
     }
 
-    function withdraw(address token, uint256 amount) external {
-        IERC20(token).safeTransfer(address(guardian), amount);
-        guardian.withdraw(token, amount, msg.sender);
-    }
 }
+
 ```
 
 #### Example smart contract consumer
@@ -77,8 +69,8 @@ contract MockDeFiConsumer {
 
     error RateLimited();
 
-    function withdraw(address token, uint256 amount) external {
-        defi.withdraw(address token, uint256 amount);
+    function withdrawalHook(address token, uint256 amount) external {
+        defi.withdrawalHook(address token, uint256 amount);
         if(guardian.isRateLimited()){
             revert RateLimited()
         }
