@@ -3,11 +3,11 @@ pragma solidity 0.8.19;
 
 import {SafeERC20} from "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
-import {IGuardian} from "../interfaces/IGuardian.sol";
+import {ICircuitBreaker} from "../interfaces/ICircuitBreaker.sol";
 import {Limiter, LiqChangeNode} from "../static/Structs.sol";
 import {LimiterLib, LimitStatus} from "../utils/LimiterLib.sol";
 
-contract Guardian is IGuardian {
+contract CircuitBreaker is ICircuitBreaker {
     using SafeERC20 for IERC20;
     using LimiterLib for Limiter;
 
@@ -22,7 +22,7 @@ contract Guardian is IGuardian {
      */
     mapping(address recipient => mapping(address token => uint256 amount)) public lockedFunds;
 
-    mapping(address account => bool guardActive) public isGuardedContract;
+    mapping(address account => bool protectionActive) public isProtectedContract;
 
     address public admin;
 
@@ -57,7 +57,7 @@ contract Guardian is IGuardian {
     //                           ERRORS                           //
     ////////////////////////////////////////////////////////////////
 
-    error NotAGuardedContract();
+    error NotAProtectedContract();
     error NotAdmin();
     error InvalidAdminAddress();
     error NoLockedFunds();
@@ -69,8 +69,8 @@ contract Guardian is IGuardian {
     //                         MODIFIERS                          //
     ////////////////////////////////////////////////////////////////
 
-    modifier onlyGuarded() {
-        if (!isGuardedContract[msg.sender]) revert NotAGuardedContract();
+    modifier onlyProtected() {
+        if (!isProtectedContract[msg.sender]) revert NotAProtectedContract();
         _;
     }
 
@@ -123,9 +123,9 @@ contract Guardian is IGuardian {
     }
 
     /**
-     * @dev Give guarded contracts one function to call for convenience
+     * @dev Give protected contracts one function to call for convenience
      */
-    function depositHook(address _token, uint256 _amount) external onlyGuarded {
+    function depositHook(address _token, uint256 _amount) external onlyProtected {
         /// @dev uint256 could overflow into negative
         tokenLimiters[_token].recordChange(int256(_amount), WITHDRAWAL_PERIOD, TICK_LENGTH);
         emit TokenInflow(_token, _amount);
@@ -136,7 +136,7 @@ contract Guardian is IGuardian {
         uint256 _amount,
         address _recipient,
         bool _revertOnRateLimit
-    ) external onlyGuarded {
+    ) external onlyProtected {
         Limiter storage limiter = tokenLimiters[_token];
         // Check if the token has enforced rate limited
         if (!limiter.initialized()) {
@@ -223,15 +223,15 @@ contract Guardian is IGuardian {
         isRateLimited = false;
     }
 
-    function addGuardedContracts(address[] calldata _guardedContracts) external onlyAdmin {
-        for (uint256 i = 0; i < _guardedContracts.length; i++) {
-            isGuardedContract[_guardedContracts[i]] = true;
+    function addProtectedContracts(address[] calldata _ProtectedContracts) external onlyAdmin {
+        for (uint256 i = 0; i < _ProtectedContracts.length; i++) {
+            isProtectedContract[_ProtectedContracts[i]] = true;
         }
     }
 
-    function removeGuardedContracts(address[] calldata _guardedContracts) external onlyAdmin {
-        for (uint256 i = 0; i < _guardedContracts.length; i++) {
-            isGuardedContract[_guardedContracts[i]] = false;
+    function removeProtectedContracts(address[] calldata _ProtectedContracts) external onlyAdmin {
+        for (uint256 i = 0; i < _ProtectedContracts.length; i++) {
+            isProtectedContract[_ProtectedContracts[i]] = false;
         }
     }
 

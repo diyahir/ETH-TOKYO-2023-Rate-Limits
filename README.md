@@ -1,6 +1,6 @@
-# DeFi Guardian: Token rate-limits for your DeFi Protocol
+# DeFi CircuitBreaker: Token rate-limits for your DeFi Protocol
 
-![Defi_Guardian11](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/10442269/10ee3de0-ff92-4d1d-8557-1d859c91199c)
+![Defi_CircuitBreaker11](https://github.com/Hydrogen-Labs/DeFi-CircuitBreaker/assets/10442269/10ee3de0-ff92-4d1d-8557-1d859c91199c)
 
 ## Features
 
@@ -12,8 +12,8 @@
 - Enforces withdrawal limits and periods to prevent total fund drainage (hack mitigation).
 - Allows the contract owner to register tokens, override limits, and transfer admin privileges.
 
-![Rate limit](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/87bf266d-7a1d-44d3-b7d1-1d6868013a2a)
-![DeFi Guardian](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/07c89cad-2045-448c-b1d9-bd93ab804253)
+![Rate limit](https://github.com/Hydrogen-Labs/DeFi-CircuitBreaker/assets/32445955/87bf266d-7a1d-44d3-b7d1-1d6868013a2a)
+![DeFi CircuitBreaker](https://github.com/Hydrogen-Labs/DeFi-CircuitBreaker/assets/32445955/07c89cad-2045-448c-b1d9-bd93ab804253)
 
 ## Testing
 
@@ -23,20 +23,20 @@ forge test
 
 ## Integration
 
-There are three easy points of integration that you must do to have your protocol guardian properly set up.
+There are three easy points of integration that you must do to have your protocol circuitBreaker properly set up.
 
 1. Onboard Token Logic
 2. Deposit Token integration
 3. Withdraw Token integration
-4. Set the Contract as a guarded contract on your Guardian
+4. Set the Contract as a protected contract on your CircuitBreaker
 
-#### Example Guardian Integration
+#### Example CircuitBreaker Integration
 
 ```bash
-contract MockDeFiProtocol is GuardedContract {
+contract MockDeFiProtocol is ProtectedContract {
     using SafeERC20 for IERC20;
 
-    constructor(address _guardian) GuardedContract(_guardian) {}
+    constructor(address _circuitBreaker) ProtectedContract(_circuitBreaker) {}
 
     /*
      * @notice Use _depositHook to safe transfer tokens and record inflow to circuit-breaker
@@ -55,7 +55,6 @@ contract MockDeFiProtocol is GuardedContract {
 
         _withdrawalHook(_token, _amount, msg.sender, false);
     }
-
 }
 
 ```
@@ -64,14 +63,14 @@ contract MockDeFiProtocol is GuardedContract {
 
 ```bash
 contract MockDeFiConsumer {
-    IGuardian guardian;
+    ICircuitBreaker circuitBreaker;
     IMockDeFi defi;
 
     error RateLimited();
 
     function withdrawalHook(address token, uint256 amount) external {
         defi.withdrawalHook(address token, uint256 amount);
-        if(guardian.isRateLimited()){
+        if(circuitBreaker.isRateLimited()){
             revert RateLimited()
         }
         # If there is no revertOnRateLimit flag be the defi protocol

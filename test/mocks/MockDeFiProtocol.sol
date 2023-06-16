@@ -3,13 +3,13 @@ pragma solidity 0.8.19;
 
 import {SafeERC20} from "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
-import {IGuardian} from "../../src/interfaces/IGuardian.sol";
-import {GuardedContract} from "../../src/core/GuardedContract.sol";
+import {ICircuitBreaker} from "../../src/interfaces/ICircuitBreaker.sol";
+import {ProtectedContract} from "../../src/core/ProtectedContract.sol";
 
-contract MockDeFiProtocol is GuardedContract {
+contract MockDeFiProtocol is ProtectedContract {
     using SafeERC20 for IERC20;
 
-    constructor(address _guardian) GuardedContract(_guardian) {}
+    constructor(address _circuitBreaker) ProtectedContract(_circuitBreaker) {}
 
     /*
      * @notice Use _depositHook to safe transfer tokens and record inflow to circuit-breaker
@@ -35,8 +35,8 @@ contract MockDeFiProtocol is GuardedContract {
         _withdrawalHook(_token, _amount, msg.sender, false);
     }
 
-    // Used to compare gas usage with and without guardian
-    function depositNoGuardian(address _token, uint256 _amount) external {
+    // Used to compare gas usage with and without circuitBreaker
+    function depositNoCircuitBreaker(address _token, uint256 _amount) external {
         IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
     }
 }

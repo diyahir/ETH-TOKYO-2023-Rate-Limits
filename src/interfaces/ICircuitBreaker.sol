@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {LiqChangeNode} from "../static/Structs.sol";
 
-interface IGuardian {
+interface ICircuitBreaker {
     /**
      *
      * State changing functions *
@@ -41,9 +41,9 @@ interface IGuardian {
 
     function removeExpiredRateLimit() external;
 
-    function addGuardedContracts(address[] calldata _guardedContracts) external;
+    function addProtectedContracts(address[] calldata _ProtectedContracts) external;
 
-    function removeGuardedContracts(address[] calldata _guardedContracts) external;
+    function removeProtectedContracts(address[] calldata _ProtectedContracts) external;
 
     /**
      *
@@ -67,7 +67,7 @@ interface IGuardian {
 
     function lockedFunds(address recipient, address token) external view returns (uint256 amount);
 
-    function isGuardedContract(address account) external view returns (bool guardActive);
+    function isProtectedContract(address account) external view returns (bool protectionActive);
 
     function admin() external view returns (address);
 
