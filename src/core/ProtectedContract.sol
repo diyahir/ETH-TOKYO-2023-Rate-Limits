@@ -18,11 +18,6 @@ contract ProtectedContract {
         circuitBreaker = ICircuitBreaker(_circuitBreaker);
     }
 
-    // Allows to set a new circuitBreaker
-    function setCircuitBreaker(address _circuitBreaker) external {
-        circuitBreaker = ICircuitBreaker(_circuitBreaker);
-    }
-
     // Internal function to be used when tokens are deposited
     // Transfers the tokens from sender to recipient and then calls the circuitBreaker's depositHook
     function _depositHook(
