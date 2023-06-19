@@ -1,6 +1,6 @@
 # DeFi CircuitBreaker: Token rate-limits for your DeFi Protocol
 
-![Defi_CircuitBreaker11](https://github.com/Hydrogen-Labs/DeFi-CircuitBreaker/assets/10442269/10ee3de0-ff92-4d1d-8557-1d859c91199c)
+![Defi_CircuitBreaker11](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/10442269/10ee3de0-ff92-4d1d-8557-1d859c91199c)
 
 ## Features
 
@@ -23,12 +23,11 @@ forge test
 
 ## Integration
 
-There are three easy points of integration that you must do to have your protocol circuitBreaker properly set up.
+There are easy points of integration that you must do to have your protocol circuitBreaker properly set up.
 
-1. Onboard Token Logic
-2. Deposit Token integration
-3. Withdraw Token integration
-4. Set the Contract as a protected contract on your CircuitBreaker
+1. Register token if needed
+2. Add contracts to circuit breaker
+3. use 'ProtectedContract's internal functions to move funds out of the protocol (not needed for moving assets within your protocol's contracts)
 
 #### Example CircuitBreaker Integration
 
