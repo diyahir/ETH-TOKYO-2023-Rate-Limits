@@ -112,7 +112,7 @@ contract CircuitBreaker is ICircuitBreaker {
         emit TokenRegistered(_token, _minLiqRetainedBps, _limitBeginThreshold);
     }
 
-    function updateTokenRateLimitParams(
+    function updateTokenParams(
         address _token,
         uint256 _minLiqRetainedBps,
         uint256 _limitBeginThreshold
@@ -125,13 +125,13 @@ contract CircuitBreaker is ICircuitBreaker {
     /**
      * @dev Give protected contracts one function to call for convenience
      */
-    function depositHook(address _token, uint256 _amount) external onlyProtected {
+    function inflowHook(address _token, uint256 _amount) external onlyProtected {
         /// @dev uint256 could overflow into negative
         tokenLimiters[_token].recordChange(int256(_amount), WITHDRAWAL_PERIOD, TICK_LENGTH);
         emit TokenInflow(_token, _amount);
     }
 
-    function withdrawalHook(
+    function outflowHook(
         address _token,
         uint256 _amount,
         address _recipient,
@@ -206,7 +206,7 @@ contract CircuitBreaker is ICircuitBreaker {
         emit AdminSet(_newAdmin);
     }
 
-    function removeRateLimit() external onlyAdmin {
+    function overrideRateLimit() external onlyAdmin {
         if (!isRateLimited) revert NotRateLimited();
         isRateLimited = false;
         // Allow the grace period to extend for the full withdrawal period to not trigger rate limit again
@@ -214,7 +214,7 @@ contract CircuitBreaker is ICircuitBreaker {
         gracePeriodEndTimestamp = lastRateLimitTimestamp + WITHDRAWAL_PERIOD;
     }
 
-    function removeExpiredRateLimit() external {
+    function overrideExpiredRateLimit() external {
         if (!isRateLimited) revert NotRateLimited();
         if (block.timestamp - lastRateLimitTimestamp < rateLimitCooldownPeriod) {
             revert CooldownPeriodNotReached();
@@ -251,4 +251,6 @@ contract CircuitBreaker is ICircuitBreaker {
     function isInGracePeriod() public view returns (bool) {
         return block.timestamp <= gracePeriodEndTimestamp;
     }
+
+    function setGracePeriod(uint256 _gracePeriodEndTimestamp) external onlyAdmin {}
 }

@@ -67,7 +67,7 @@ contract CircuitBreakerTest is Test {
         assertEq(minLiquidityThreshold, 7000);
 
         vm.prank(admin);
-        circuitBreaker.updateTokenRateLimitParams(address(secondToken), 8000, 2000e18);
+        circuitBreaker.updateTokenParams(address(secondToken), 8000, 2000e18);
         (minLiquidityThreshold, minAmount, , , , ) = circuitBreaker.tokenLimiters(
             address(secondToken)
         );
@@ -87,11 +87,11 @@ contract CircuitBreakerTest is Test {
 
         vm.prank(admin);
         vm.expectRevert(LimiterLib.InvalidMinimumLiquidityThreshold.selector);
-        circuitBreaker.updateTokenRateLimitParams(address(secondToken), 0, 2000e18);
+        circuitBreaker.updateTokenParams(address(secondToken), 0, 2000e18);
 
         vm.prank(admin);
         vm.expectRevert(LimiterLib.InvalidMinimumLiquidityThreshold.selector);
-        circuitBreaker.updateTokenRateLimitParams(address(secondToken), 10_001, 2000e18);
+        circuitBreaker.updateTokenParams(address(secondToken), 10_001, 2000e18);
     }
 
     function testRegisterTokenWhenAlreadyRegisteredShouldFail() public {
@@ -317,7 +317,7 @@ contract CircuitBreakerTest is Test {
         // False alarm
         // override the limit and allow claim of funds
         vm.prank(admin);
-        circuitBreaker.removeRateLimit();
+        circuitBreaker.overrideRateLimit();
 
         vm.warp(7 hours);
         vm.prank(alice);
@@ -346,7 +346,7 @@ contract CircuitBreakerTest is Test {
 
         vm.warp(4 days);
         vm.prank(alice);
-        circuitBreaker.removeExpiredRateLimit();
+        circuitBreaker.overrideExpiredRateLimit();
         assertEq(circuitBreaker.isRateLimited(), false);
     }
 

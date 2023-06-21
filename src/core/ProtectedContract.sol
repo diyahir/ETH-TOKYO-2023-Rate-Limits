@@ -19,8 +19,8 @@ contract ProtectedContract {
     }
 
     // Internal function to be used when tokens are deposited
-    // Transfers the tokens from sender to recipient and then calls the circuitBreaker's depositHook
-    function _depositHook(
+    // Transfers the tokens from sender to recipient and then calls the circuitBreaker's inflowHook
+    function cbInflowSafeTransferFrom(
         address _token,
         address _sender,
         address _recipient,
@@ -28,21 +28,21 @@ contract ProtectedContract {
     ) internal {
         // Transfer the tokens safely from sender to recipient
         IERC20(_token).safeTransferFrom(_sender, _recipient, _amount);
-        // Call the circuitBreaker's depositHook
-        circuitBreaker.depositHook(_token, _amount);
+        // Call the circuitBreaker's inflowHook
+        circuitBreaker.inflowHook(_token, _amount);
     }
 
     // Internal function to be used when tokens are withdrawn
-    // Transfers the tokens to the circuitBreaker and then calls the circuitBreaker's withdrawalHook
-    function _withdrawalHook(
+    // Transfers the tokens to the circuitBreaker and then calls the circuitBreaker's outflowHook
+    function cbOutflowSafeTransfer(
         address _token,
-        uint256 _amount,
         address _recipient,
+        uint256 _amount,
         bool _revertOnRateLimit
     ) internal {
         // Transfer the tokens safely to the circuitBreaker
         IERC20(_token).safeTransfer(address(circuitBreaker), _amount);
-        // Call the circuitBreaker's withdrawalHook
-        circuitBreaker.withdrawalHook(_token, _amount, _recipient, _revertOnRateLimit);
+        // Call the circuitBreaker's outflowHook
+        circuitBreaker.outflowHook(_token, _amount, _recipient, _revertOnRateLimit);
     }
 }

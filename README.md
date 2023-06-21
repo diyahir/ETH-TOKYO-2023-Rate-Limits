@@ -1,18 +1,13 @@
 # DeFi CircuitBreaker: Token rate-limits for your DeFi Protocol
 
-![Defi_CircuitBreaker11](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/10442269/10ee3de0-ff92-4d1d-8557-1d859c91199c)
-
 ## Features
 
 - Protocol Agnositic approach to token rate limiting
 - Performant Codebase
-- Multiple tokens supports with custom withdrawal rate limits and periods for each token.
+- Multiple tokens supports with custom withdrawal rate limits for each token.
 - Records inflows/outflows of token and maintains a Historical running total of the protocol's token liquidity.
 - Enforces withdrawal limits and periods to prevent total fund drainage (hack mitigation).
 - Allows the contract owner to register tokens, override limits, and transfer admin privileges.
-
-![Rate limit](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/87bf266d-7a1d-44d3-b7d1-1d6868013a2a)
-![DeFi CircuitBreaker](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/07c89cad-2045-448c-b1d9-bd93ab804253)
 
 ## Testing
 
@@ -24,7 +19,7 @@ forge test
 
 There are easy points of integration that you must do to have your protocol circuitBreaker properly set up.
 
-1. Register token if needed
+1. Register tokens if applicable
 2. Add contracts to circuit breaker
 3. use 'ProtectedContract's internal functions to move funds out of the protocol (not needed for moving assets within your protocol's contracts)
 
@@ -37,10 +32,10 @@ contract MockDeFiProtocol is ProtectedContract {
     constructor(address _circuitBreaker) ProtectedContract(_circuitBreaker) {}
 
     /*
-     * @notice Use _depositHook to safe transfer tokens and record inflow to circuit-breaker
+     * @notice Use cbInflowSafeTransferFrom to safe transfer tokens and record inflow to circuit-breaker
      */
     function deposit(address _token, uint256 _amount) external {
-        _depositHook(_token, msg.sender, address(this), _amount);
+        cbInflowSafeTransferFrom(_token, msg.sender, address(this), _amount);
 
         // Your logic here
     }
@@ -51,7 +46,7 @@ contract MockDeFiProtocol is ProtectedContract {
     function withdrawal(address _token, uint256 _amount) external {
         //  Your logic here
 
-        _withdrawalHook(_token, _amount, msg.sender, false);
+        cbOutflowSafeTransfer(_token, _amount, msg.sender, false);
     }
 }
 
@@ -66,42 +61,22 @@ contract MockDeFiConsumer {
 
     error RateLimited();
 
-    function withdrawalHook(address token, uint256 amount) external {
-        defi.withdrawalHook(address token, uint256 amount);
+    function outflowHook(address token, uint256 amount) external {
+        defi.outflowHook(address token, uint256 amount);
         if(circuitBreaker.isRateLimited()){
             revert RateLimited()
         }
-        # If there is no revertOnRateLimit flag be the defi protocol
+        # If there is no revertOnRateLimit flag in the defi protocol
         # You need to revert in your smart contract to have consistent accounting
     }
 }
 ```
 
+![Rate limit](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/87bf266d-7a1d-44d3-b7d1-1d6868013a2a)
+![DeFi CircuitBreaker](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/07c89cad-2045-448c-b1d9-bd93ab804253)
+
 ## Contributors
 
 ## License
 
-This is free and unencumbered software released into the public domain.
-
-Anyone is free to copy, modify, publish, use, compile, sell, or
-distribute this software, either in source code form or as a compiled
-binary, for any purpose, commercial or non-commercial, and by any
-means.
-
-In jurisdictions that recognize copyright laws, the author or authors
-of this software dedicate any and all copyright interest in the
-software to the public domain. We make this dedication for the benefit
-of the public at large and to the detriment of our heirs and
-successors. We intend this dedication to be an overt act of
-relinquishment in perpetuity of all present and future rights to this
-software under copyright law.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
-
-For more information, please refer to <https://unlicense.org>
+Copyright and related rights waived via [CC0](/LICENSE).

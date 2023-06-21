@@ -12,19 +12,19 @@ interface ICircuitBreaker {
 
     function registerToken(
         address _token,
-        uint256 _minLiquidityThreshold,
-        uint256 _minAmount
+        uint256 _metricThreshold,
+        uint256 _minAmountToLimit
     ) external;
 
-    function updateTokenRateLimitParams(
+    function updateTokenParams(
         address _token,
-        uint256 _minLiquidityThreshold,
-        uint256 _minAmount
+        uint256 _metricThreshold,
+        uint256 _minAmountToLimit
     ) external;
 
-    function depositHook(address _token, uint256 _amount) external;
+    function inflowHook(address _token, uint256 _amount) external;
 
-    function withdrawalHook(
+    function outflowHook(
         address _token,
         uint256 _amount,
         address _recipient,
@@ -33,37 +33,23 @@ interface ICircuitBreaker {
 
     function claimLockedFunds(address _token, address _recipient) external;
 
-    function clearBackLog(address _token, uint256 _maxIterations) external;
-
     function setAdmin(address _admin) external;
 
-    function removeRateLimit() external;
+    function overrideRateLimit() external;
 
-    function removeExpiredRateLimit() external;
+    function overrideExpiredRateLimit() external;
 
     function addProtectedContracts(address[] calldata _ProtectedContracts) external;
 
     function removeProtectedContracts(address[] calldata _ProtectedContracts) external;
+
+    function setGracePeriod(uint256 _gracePeriodEndTimestamp) external;
 
     /**
      *
      * Read-only functions *
      *
      */
-
-    function tokenLimiters(
-        address token
-    )
-        external
-        view
-        returns (
-            uint256 minLiqRetainedBps,
-            uint256 limitBeginThreshold,
-            int256 liqTotal,
-            int256 liqInPeriod,
-            uint256 listHead,
-            uint256 listTail
-        );
 
     function lockedFunds(address recipient, address token) external view returns (uint256 amount);
 

@@ -12,12 +12,13 @@ contract MockDeFiProtocol is ProtectedContract {
     constructor(address _circuitBreaker) ProtectedContract(_circuitBreaker) {}
 
     /*
-     * @notice Use _depositHook to safe transfer tokens and record inflow to circuit-breaker
+     * @notice Use cbInflowSafeTransferFrom to safe transfer tokens and record inflow to circuit-breaker
      * @param _token Token to deposit
      * @param _amount Amount to deposit
      */
     function deposit(address _token, uint256 _amount) external {
-        _depositHook(_token, msg.sender, address(this), _amount);
+        // IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
+        cbInflowSafeTransferFrom(_token, msg.sender, address(this), _amount);
 
         // Your logic here
     }
@@ -32,11 +33,13 @@ contract MockDeFiProtocol is ProtectedContract {
     function withdrawal(address _token, uint256 _amount) external {
         //  Your logic here
 
-        _withdrawalHook(_token, _amount, msg.sender, false);
+        cbOutflowSafeTransfer(_token, msg.sender, _amount, false);
     }
 
     // Used to compare gas usage with and without circuitBreaker
     function depositNoCircuitBreaker(address _token, uint256 _amount) external {
         IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
+
+        // Your logic here
     }
 }
