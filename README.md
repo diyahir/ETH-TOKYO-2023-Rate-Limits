@@ -9,12 +9,6 @@
 - Enforces withdrawal limits and periods to prevent total fund drainage (hack mitigation).
 - Allows the contract owner to register tokens, override limits, and transfer admin privileges.
 
-## Testing
-
-```bash
-forge test
-```
-
 ## Integration
 
 There are easy points of integration that you must do to have your protocol circuitBreaker properly set up.
@@ -72,8 +66,14 @@ contract MockDeFiConsumer {
 }
 ```
 
-![Rate limit](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/87bf266d-7a1d-44d3-b7d1-1d6868013a2a)
+## Testing
+
+```bash
+forge test
+```
+
 ![DeFi CircuitBreaker](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/07c89cad-2045-448c-b1d9-bd93ab804253)
+![Rate limit](https://github.com/Hydrogen-Labs/DeFi-Guardian/assets/32445955/87bf266d-7a1d-44d3-b7d1-1d6868013a2a)
 
 ## Contributors
 
