@@ -1,5 +1,5 @@
 {
-  "name": "defi-circuit-breakers",
+  "name": "defi-circuit-breaker",
   "version": "0.1.0",
   "private": true,
   "scripts": {
