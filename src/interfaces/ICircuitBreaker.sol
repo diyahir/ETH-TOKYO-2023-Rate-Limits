@@ -31,6 +31,10 @@ interface ICircuitBreaker {
         bool _revertOnRateLimit
     ) external;
 
+    function inflowHookNative(uint256 _amount) external;
+
+    function outflowHookNative(address _recipient, bool _revertOnRateLimit) external payable;
+
     function claimLockedFunds(address _token, address _recipient) external;
 
     function setAdmin(address _admin) external;

@@ -42,4 +42,12 @@ contract MockDeFiProtocol is ProtectedContract {
 
         // Your logic here
     }
+
+    function depositNative() external payable {
+        cbInflowNative();
+    }
+
+    function withdrawalNative(uint256 _amount) external {
+        cbOutflowNative(msg.sender, _amount, false);
+    }
 }

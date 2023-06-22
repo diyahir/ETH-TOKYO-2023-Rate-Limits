@@ -45,4 +45,18 @@ contract ProtectedContract {
         // Call the circuitBreaker's outflowHook
         circuitBreaker.outflowHook(_token, _amount, _recipient, _revertOnRateLimit);
     }
+
+    function cbInflowNative() internal {
+        // Transfer the tokens safely from sender to recipient
+        circuitBreaker.inflowHookNative(msg.value);
+    }
+
+    function cbOutflowNative(
+        address _recipient,
+        uint256 _amount,
+        bool _revertOnRateLimit
+    ) internal {
+        // Transfer the native tokens safely through the circuitBreaker
+        circuitBreaker.outflowHookNative{value: _amount}(_recipient, _revertOnRateLimit);
+    }
 }
