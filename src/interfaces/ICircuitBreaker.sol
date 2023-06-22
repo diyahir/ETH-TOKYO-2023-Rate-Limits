@@ -1,0 +1,71 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.19;
+
+import {LiqChangeNode} from "../static/Structs.sol";
+
+interface ICircuitBreaker {
+    /**
+     *
+     * State changing functions *
+     *
+     */
+
+    function registerToken(
+        address _token,
+        uint256 _metricThreshold,
+        uint256 _minAmountToLimit
+    ) external;
+
+    function updateTokenParams(
+        address _token,
+        uint256 _metricThreshold,
+        uint256 _minAmountToLimit
+    ) external;
+
+    function inflowHook(address _token, uint256 _amount) external;
+
+    function outflowHook(
+        address _token,
+        uint256 _amount,
+        address _recipient,
+        bool _revertOnRateLimit
+    ) external;
+
+    function claimLockedFunds(address _token, address _recipient) external;
+
+    function setAdmin(address _admin) external;
+
+    function overrideRateLimit() external;
+
+    function overrideExpiredRateLimit() external;
+
+    function addProtectedContracts(address[] calldata _ProtectedContracts) external;
+
+    function removeProtectedContracts(address[] calldata _ProtectedContracts) external;
+
+    function setGracePeriod(uint256 _gracePeriodEndTimestamp) external;
+
+    /**
+     *
+     * Read-only functions *
+     *
+     */
+
+    function lockedFunds(address recipient, address token) external view returns (uint256 amount);
+
+    function isProtectedContract(address account) external view returns (bool protectionActive);
+
+    function admin() external view returns (address);
+
+    function isRateLimited() external view returns (bool);
+
+    function rateLimitCooldownPeriod() external view returns (uint256);
+
+    function lastRateLimitTimestamp() external view returns (uint256);
+
+    function gracePeriodEndTimestamp() external view returns (uint256);
+
+    function isRateLimitBreeched(address _token) external view returns (bool);
+
+    function isInGracePeriod() external view returns (bool);
+}

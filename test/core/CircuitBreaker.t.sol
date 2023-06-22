@@ -4,14 +4,14 @@ pragma solidity 0.8.19;
 import {Test} from "forge-std/Test.sol";
 import {MockToken} from "../mocks/MockToken.sol";
 import {MockDeFiProtocol} from "../mocks/MockDeFiProtocol.sol";
-import {Guardian} from "src/core/Guardian.sol";
+import {CircuitBreaker} from "src/core/CircuitBreaker.sol";
 import {LimiterLib} from "src/utils/LimiterLib.sol";
 
-contract GuadianTest is Test {
+contract CircuitBreakerTest is Test {
     MockToken internal token;
     MockToken internal secondToken;
     MockToken internal unlimitedToken;
-    Guardian internal guardian;
+    CircuitBreaker internal circuitBreaker;
     MockDeFiProtocol internal deFi;
 
     address internal alice = vm.addr(0x1);
@@ -20,27 +20,25 @@ contract GuadianTest is Test {
 
     function setUp() public {
         token = new MockToken("USDC", "USDC");
-        deFi = new MockDeFiProtocol();
-        guardian = new Guardian(admin, 3 days, 4 hours, 5 minutes);
-
-        deFi.setGuardian(address(guardian));
+        circuitBreaker = new CircuitBreaker(admin, 3 days, 4 hours, 5 minutes);
+        deFi = new MockDeFiProtocol(address(circuitBreaker));
 
         address[] memory addresses = new address[](1);
         addresses[0] = address(deFi);
 
         vm.prank(admin);
-        guardian.addGuardedContracts(addresses);
+        circuitBreaker.addProtectedContracts(addresses);
 
         vm.prank(admin);
-        // Guard USDC with 70% max drawdown per 4 hours
-        guardian.registerToken(address(token), 7000, 1000e18);
+        // Protect USDC with 70% max drawdown per 4 hours
+        circuitBreaker.registerToken(address(token), 7000, 1000e18);
         vm.warp(1 hours);
     }
 
     function testInitialization() public {
-        Guardian newGuardian = new Guardian(admin, 3 days, 3 hours, 5 minutes);
-        assertEq(newGuardian.admin(), admin);
-        assertEq(newGuardian.rateLimitCooldownPeriod(), 3 days);
+        CircuitBreaker newCircuitBreaker = new CircuitBreaker(admin, 3 days, 3 hours, 5 minutes);
+        assertEq(newCircuitBreaker.admin(), admin);
+        assertEq(newCircuitBreaker.rateLimitCooldownPeriod(), 3 days);
     }
 
     function testMint() public {
@@ -61,14 +59,18 @@ contract GuadianTest is Test {
     function testRegisterTokenShouldBeSuccessful() public {
         secondToken = new MockToken("DAI", "DAI");
         vm.prank(admin);
-        guardian.registerToken(address(secondToken), 7000, 1000e18);
-        (uint256 minLiquidityThreshold, uint256 minAmount,,,,) = guardian.tokenLimiters(address(secondToken));
+        circuitBreaker.registerToken(address(secondToken), 7000, 1000e18);
+        (uint256 minLiquidityThreshold, uint256 minAmount, , , , ) = circuitBreaker.tokenLimiters(
+            address(secondToken)
+        );
         assertEq(minAmount, 1000e18);
         assertEq(minLiquidityThreshold, 7000);
 
         vm.prank(admin);
-        guardian.updateTokenRateLimitParams(address(secondToken), 8000, 2000e18);
-        (minLiquidityThreshold, minAmount,,,,) = guardian.tokenLimiters(address(secondToken));
+        circuitBreaker.updateTokenParams(address(secondToken), 8000, 2000e18);
+        (minLiquidityThreshold, minAmount, , , , ) = circuitBreaker.tokenLimiters(
+            address(secondToken)
+        );
         assertEq(minAmount, 2000e18);
         assertEq(minLiquidityThreshold, 8000);
     }
@@ -77,29 +79,29 @@ contract GuadianTest is Test {
         secondToken = new MockToken("DAI", "DAI");
         vm.prank(admin);
         vm.expectRevert(LimiterLib.InvalidMinimumLiquidityThreshold.selector);
-        guardian.registerToken(address(secondToken), 0, 1000e18);
+        circuitBreaker.registerToken(address(secondToken), 0, 1000e18);
 
         vm.prank(admin);
         vm.expectRevert(LimiterLib.InvalidMinimumLiquidityThreshold.selector);
-        guardian.registerToken(address(secondToken), 10_001, 1000e18);
+        circuitBreaker.registerToken(address(secondToken), 10_001, 1000e18);
 
         vm.prank(admin);
         vm.expectRevert(LimiterLib.InvalidMinimumLiquidityThreshold.selector);
-        guardian.updateTokenRateLimitParams(address(secondToken), 0, 2000e18);
+        circuitBreaker.updateTokenParams(address(secondToken), 0, 2000e18);
 
         vm.prank(admin);
         vm.expectRevert(LimiterLib.InvalidMinimumLiquidityThreshold.selector);
-        guardian.updateTokenRateLimitParams(address(secondToken), 10_001, 2000e18);
+        circuitBreaker.updateTokenParams(address(secondToken), 10_001, 2000e18);
     }
 
     function testRegisterTokenWhenAlreadyRegisteredShouldFail() public {
         secondToken = new MockToken("DAI", "DAI");
         vm.prank(admin);
-        guardian.registerToken(address(secondToken), 7000, 1000e18);
+        circuitBreaker.registerToken(address(secondToken), 7000, 1000e18);
         // Cannot register the same token twice
         vm.expectRevert(LimiterLib.LimiterAlreadyInitialized.selector);
         vm.prank(admin);
-        guardian.registerToken(address(secondToken), 7000, 1000e18);
+        circuitBreaker.registerToken(address(secondToken), 7000, 1000e18);
     }
 
     function testDepositWithDrawNoLimitToken() public {
@@ -112,11 +114,11 @@ contract GuadianTest is Test {
         vm.prank(alice);
         deFi.deposit(address(unlimitedToken), 10000e18);
 
-        assertEq(guardian.isRateLimitBreeched(address(unlimitedToken)), false);
+        assertEq(circuitBreaker.isRateLimitBreeched(address(unlimitedToken)), false);
         vm.warp(1 hours);
         vm.prank(alice);
-        deFi.withdraw(address(unlimitedToken), 10000e18);
-        assertEq(guardian.isRateLimitBreeched(address(unlimitedToken)), false);
+        deFi.withdrawal(address(unlimitedToken), 10000e18);
+        assertEq(circuitBreaker.isRateLimitBreeched(address(unlimitedToken)), false);
     }
 
     function testDepositShouldBeSuccessful() public {
@@ -128,23 +130,27 @@ contract GuadianTest is Test {
         vm.prank(alice);
         deFi.deposit(address(token), 10e18);
 
-        assertEq(guardian.isRateLimitBreeched(address(token)), false);
+        assertEq(circuitBreaker.isRateLimitBreeched(address(token)), false);
 
-        (,, int256 liqTotal, int256 liqInPeriod, uint256 head, uint256 tail) = guardian.tokenLimiters(address(token));
+        (, , int256 liqTotal, int256 liqInPeriod, uint256 head, uint256 tail) = circuitBreaker
+            .tokenLimiters(address(token));
 
         assertEq(head, tail);
         assertEq(liqTotal, 0);
         assertEq(liqInPeriod, 10e18);
 
-        (uint256 nextTimestamp, int256 amount) = guardian.tokenLiquidityChanges(address(token), head);
+        (uint256 nextTimestamp, int256 amount) = circuitBreaker.tokenLiquidityChanges(
+            address(token),
+            head
+        );
         assertEq(nextTimestamp, 0);
         assertEq(amount, 10e18);
 
         vm.warp(1 hours);
         vm.prank(alice);
         deFi.deposit(address(token), 110e18);
-        assertEq(guardian.isRateLimitBreeched(address(token)), false);
-        (,, liqTotal, liqInPeriod,,) = guardian.tokenLimiters(address(token));
+        assertEq(circuitBreaker.isRateLimitBreeched(address(token)), false);
+        (, , liqTotal, liqInPeriod, , ) = circuitBreaker.tokenLimiters(address(token));
         assertEq(liqTotal, 0);
         assertEq(liqInPeriod, 120e18);
 
@@ -152,8 +158,8 @@ contract GuadianTest is Test {
         vm.warp(10 hours);
         vm.prank(alice);
         deFi.deposit(address(token), 10e18);
-        assertEq(guardian.isRateLimitBreeched(address(token)), false);
-        (,, liqTotal, liqInPeriod, head, tail) = guardian.tokenLimiters(address(token));
+        assertEq(circuitBreaker.isRateLimitBreeched(address(token)), false);
+        (, , liqTotal, liqInPeriod, head, tail) = circuitBreaker.tokenLimiters(address(token));
         assertEq(liqTotal, 120e18);
         assertEq(liqInPeriod, 10e18);
 
@@ -189,9 +195,10 @@ contract GuadianTest is Test {
         deFi.deposit(address(token), 1);
 
         vm.warp(6.5 hours);
-        guardian.clearBackLog(address(token), 10);
+        circuitBreaker.clearBackLog(address(token), 10);
 
-        (,, int256 liqTotal, int256 liqInPeriod, uint256 head, uint256 tail) = guardian.tokenLimiters(address(token));
+        (, , int256 liqTotal, int256 liqInPeriod, uint256 head, uint256 tail) = circuitBreaker
+            .tokenLimiters(address(token));
         // only deposits from 2.5 hours and later should be in the window
         assertEq(liqInPeriod, 3);
         assertEq(liqTotal, 2);
@@ -211,9 +218,11 @@ contract GuadianTest is Test {
 
         vm.warp(1 hours);
         vm.prank(alice);
-        deFi.withdraw(address(token), 60e18);
-        assertEq(guardian.isRateLimitBreeched(address(token)), false);
-        (,, int256 liqTotal, int256 liqInPeriod,,) = guardian.tokenLimiters(address(token));
+        deFi.withdrawal(address(token), 60e18);
+        assertEq(circuitBreaker.isRateLimitBreeched(address(token)), false);
+        (, , int256 liqTotal, int256 liqInPeriod, , ) = circuitBreaker.tokenLimiters(
+            address(token)
+        );
         assertEq(liqInPeriod, 40e18);
         assertEq(liqTotal, 0);
         assertEq(token.balanceOf(alice), 9960e18);
@@ -222,11 +231,11 @@ contract GuadianTest is Test {
         vm.warp(10 hours);
         vm.prank(alice);
         deFi.deposit(address(token), 10e18);
-        assertEq(guardian.isRateLimitBreeched(address(token)), false);
+        assertEq(circuitBreaker.isRateLimitBreeched(address(token)), false);
 
         uint256 tail;
         uint256 head;
-        (,, liqTotal, liqInPeriod, head, tail) = guardian.tokenLimiters(address(token));
+        (, , liqTotal, liqInPeriod, head, tail) = circuitBreaker.tokenLimiters(address(token));
         assertEq(liqInPeriod, 10e18);
         assertEq(liqTotal, 40e18);
 
@@ -234,30 +243,28 @@ contract GuadianTest is Test {
         assertEq(tail, block.timestamp);
     }
 
-    function testAddGuardedContractsShouldBeSuccessful() public {
-        MockDeFiProtocol secondDeFi = new MockDeFiProtocol();
-        secondDeFi.setGuardian(address(guardian));
+    function testAddProtectedContractsShouldBeSuccessful() public {
+        MockDeFiProtocol secondDeFi = new MockDeFiProtocol(address(circuitBreaker));
 
         address[] memory addresses = new address[](1);
         addresses[0] = address(secondDeFi);
         vm.prank(admin);
-        guardian.addGuardedContracts(addresses);
+        circuitBreaker.addProtectedContracts(addresses);
 
-        assertEq(guardian.isGuardedContract(address(secondDeFi)), true);
+        assertEq(circuitBreaker.isProtectedContract(address(secondDeFi)), true);
     }
 
-    function testRemoveGuardedContractsShouldBeSuccessful() public {
-        MockDeFiProtocol secondDeFi = new MockDeFiProtocol();
-        secondDeFi.setGuardian(address(guardian));
+    function testRemoveProtectedContractsShouldBeSuccessful() public {
+        MockDeFiProtocol secondDeFi = new MockDeFiProtocol(address(circuitBreaker));
 
         address[] memory addresses = new address[](1);
         addresses[0] = address(secondDeFi);
         vm.prank(admin);
-        guardian.addGuardedContracts(addresses);
+        circuitBreaker.addProtectedContracts(addresses);
 
         vm.prank(admin);
-        guardian.removeGuardedContracts(addresses);
-        assertEq(guardian.isGuardedContract(address(secondDeFi)), false);
+        circuitBreaker.removeProtectedContracts(addresses);
+        assertEq(circuitBreaker.isProtectedContract(address(secondDeFi)), false);
     }
 
     function testBreach() public {
@@ -275,38 +282,46 @@ contract GuadianTest is Test {
         int256 withdrawalAmount = 300_001e18;
         vm.warp(5 hours);
         vm.prank(alice);
-        deFi.withdraw(address(token), uint256(withdrawalAmount));
-        assertEq(guardian.isRateLimitBreeched(address(token)), true);
-        (,, int256 liqTotal, int256 liqInPeriod,,) = guardian.tokenLimiters(address(token));
+        deFi.withdrawal(address(token), uint256(withdrawalAmount));
+        assertEq(circuitBreaker.isRateLimitBreeched(address(token)), true);
+        (, , int256 liqTotal, int256 liqInPeriod, , ) = circuitBreaker.tokenLimiters(
+            address(token)
+        );
         assertEq(liqInPeriod, -withdrawalAmount);
         assertEq(liqTotal, 1_000_000e18);
 
-        assertEq(guardian.lockedFunds(address(alice), address(token)), uint256(withdrawalAmount));
+        assertEq(
+            circuitBreaker.lockedFunds(address(alice), address(token)),
+            uint256(withdrawalAmount)
+        );
         assertEq(token.balanceOf(alice), 0);
-        assertEq(token.balanceOf(address(guardian)), uint256(withdrawalAmount));
+        assertEq(token.balanceOf(address(circuitBreaker)), uint256(withdrawalAmount));
         assertEq(token.balanceOf(address(deFi)), 1_000_000e18 - uint256(withdrawalAmount));
 
         // Attempts to withdraw more than the limit
         vm.warp(6 hours);
         vm.prank(alice);
         int256 secondAmount = 10_000e18;
-        deFi.withdraw(address(token), uint256(secondAmount));
-        assertEq(guardian.isRateLimitBreeched(address(token)), true);
-        (,, liqTotal, liqInPeriod,,) = guardian.tokenLimiters(address(token));
+        deFi.withdrawal(address(token), uint256(secondAmount));
+        assertEq(circuitBreaker.isRateLimitBreeched(address(token)), true);
+        (, , liqTotal, liqInPeriod, , ) = circuitBreaker.tokenLimiters(address(token));
         assertEq(liqInPeriod, -withdrawalAmount - secondAmount);
         assertEq(liqTotal, 1_000_000e18);
 
-        assertEq(guardian.lockedFunds(address(alice), address(token)), uint256(withdrawalAmount + secondAmount));
+        assertEq(
+            circuitBreaker.lockedFunds(address(alice), address(token)),
+            uint256(withdrawalAmount + secondAmount)
+        );
         assertEq(token.balanceOf(alice), 0);
 
         // False alarm
         // override the limit and allow claim of funds
         vm.prank(admin);
-        guardian.removeRateLimit();
+        circuitBreaker.overrideRateLimit();
 
         vm.warp(7 hours);
         vm.prank(alice);
-        guardian.claimLockedFunds(address(token), address(alice));
+        circuitBreaker.claimLockedFunds(address(token), address(alice));
         assertEq(token.balanceOf(alice), uint256(withdrawalAmount + secondAmount));
     }
 
@@ -325,30 +340,30 @@ contract GuadianTest is Test {
         int256 withdrawalAmount = 300_001e18;
         vm.warp(5 hours);
         vm.prank(alice);
-        deFi.withdraw(address(token), uint256(withdrawalAmount));
-        assertEq(guardian.isRateLimitBreeched(address(token)), true);
-        assertEq(guardian.isRateLimited(), true);
+        deFi.withdrawal(address(token), uint256(withdrawalAmount));
+        assertEq(circuitBreaker.isRateLimitBreeched(address(token)), true);
+        assertEq(circuitBreaker.isRateLimited(), true);
 
         vm.warp(4 days);
         vm.prank(alice);
-        guardian.removeExpiredRateLimit();
-        assertEq(guardian.isRateLimited(), false);
+        circuitBreaker.overrideExpiredRateLimit();
+        assertEq(circuitBreaker.isRateLimited(), false);
     }
 
     function testSetAdminShouldBeSuccessful() public {
-        assertEq(guardian.admin(), admin);
+        assertEq(circuitBreaker.admin(), admin);
         vm.prank(admin);
-        guardian.setAdmin(bob);
-        assertEq(guardian.admin(), bob);
+        circuitBreaker.setAdmin(bob);
+        assertEq(circuitBreaker.admin(), bob);
 
         vm.expectRevert();
         vm.prank(admin);
-        guardian.setAdmin(alice);
+        circuitBreaker.setAdmin(alice);
     }
 
     function testSetAdminWhenCallerIsNotAdminShouldFail() public {
-        vm.expectRevert(Guardian.NotAdmin.selector);
-        guardian.setAdmin(alice);
+        vm.expectRevert(CircuitBreaker.NotAdmin.selector);
+        circuitBreaker.setAdmin(alice);
     }
 
     function testDepositsAndWithdrawlsInSameTickLength() public {
@@ -362,7 +377,7 @@ contract GuadianTest is Test {
         vm.prank(alice);
         deFi.deposit(address(token), 10e18);
 
-        (,,,, uint256 head,) = guardian.tokenLimiters(address(token));
+        (, , , , uint256 head, ) = circuitBreaker.tokenLimiters(address(token));
         assertEq(head % 5 minutes, 0);
 
         // 1 minute later 10 usdc deposited, 1 usdc withdrawn all within the same tick length
@@ -370,25 +385,31 @@ contract GuadianTest is Test {
         vm.prank(alice);
         deFi.deposit(address(token), 10e18);
 
-        deFi.withdraw(address(token), 1e18);
+        deFi.withdrawal(address(token), 1e18);
 
-        (uint256 nextTimestamp, int256 amount) = guardian.tokenLiquidityChanges(address(token), head);
+        (uint256 nextTimestamp, int256 amount) = circuitBreaker.tokenLiquidityChanges(
+            address(token),
+            head
+        );
         assertEq(nextTimestamp, 0);
         assertEq(amount, 19e18);
 
         // Next tick length, 1 usdc withdrawn
         vm.warp(1 days + 6 minutes);
         vm.prank(alice);
-        deFi.withdraw(address(token), 1e18);
+        deFi.withdrawal(address(token), 1e18);
 
-        (nextTimestamp, amount) = guardian.tokenLiquidityChanges(address(token), head);
+        (nextTimestamp, amount) = circuitBreaker.tokenLiquidityChanges(address(token), head);
         assertEq(nextTimestamp, 1 days + 6 minutes - ((1 days + 6 minutes) % 5 minutes));
         assertEq(nextTimestamp % 5 minutes, 0);
         // previous tick length has 19 usdc deposited
         assertEq(amount, 19e18);
 
         // Next tick values
-        (nextTimestamp, amount) = guardian.tokenLiquidityChanges(address(token), nextTimestamp);
+        (nextTimestamp, amount) = circuitBreaker.tokenLiquidityChanges(
+            address(token),
+            nextTimestamp
+        );
         assertEq(nextTimestamp, 0);
         assertEq(amount, -1e18);
     }
@@ -399,6 +420,6 @@ contract GuadianTest is Test {
         vm.prank(alice);
         token.approve(address(deFi), amount);
         vm.prank(alice);
-        deFi.depositNoGuardian(address(token), amount);
+        deFi.depositNoCircuitBreaker(address(token), amount);
     }
 }

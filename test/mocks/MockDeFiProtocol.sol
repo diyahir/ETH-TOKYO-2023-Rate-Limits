@@ -3,30 +3,43 @@ pragma solidity 0.8.19;
 
 import {SafeERC20} from "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
+import {ICircuitBreaker} from "../../src/interfaces/ICircuitBreaker.sol";
+import {ProtectedContract} from "../../src/core/ProtectedContract.sol";
 
-import {IGuardian} from "../../src/interfaces/IGuardian.sol";
-
-contract MockDeFiProtocol {
+contract MockDeFiProtocol is ProtectedContract {
     using SafeERC20 for IERC20;
 
-    IGuardian public guardian;
+    constructor(address _circuitBreaker) ProtectedContract(_circuitBreaker) {}
 
-    function setGuardian(address _guardian) external {
-        guardian = IGuardian(_guardian);
+    /*
+     * @notice Use cbInflowSafeTransferFrom to safe transfer tokens and record inflow to circuit-breaker
+     * @param _token Token to deposit
+     * @param _amount Amount to deposit
+     */
+    function deposit(address _token, uint256 _amount) external {
+        // IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
+        cbInflowSafeTransferFrom(_token, msg.sender, address(this), _amount);
+
+        // Your logic here
     }
 
-    function deposit(address token, uint256 amount) external {
-        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        guardian.recordInflow(token, amount);
+    /*
+     * @notice Withdrawal hook for circuit breaker to safe transfer tokens and enforcement
+     * @param _token Token to withdraw
+     * @param _amount Amount to withdraw
+     * @param _recipient Recipient of withdrawal
+     * @param _revertOnRateLimit Revert if rate limit is reached
+     */
+    function withdrawal(address _token, uint256 _amount) external {
+        //  Your logic here
+
+        cbOutflowSafeTransfer(_token, msg.sender, _amount, false);
     }
 
-    function withdraw(address token, uint256 amount) external {
-        IERC20(token).safeTransfer(address(guardian), amount);
-        guardian.withdraw(token, amount, msg.sender, false);
-    }
+    // Used to compare gas usage with and without circuitBreaker
+    function depositNoCircuitBreaker(address _token, uint256 _amount) external {
+        IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
 
-    // Used to compare gas usage with and without guardian
-    function depositNoGuardian(address token, uint256 amount) external {
-        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        // Your logic here
     }
 }

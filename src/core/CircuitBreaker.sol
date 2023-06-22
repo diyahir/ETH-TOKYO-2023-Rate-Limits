@@ -3,11 +3,11 @@ pragma solidity 0.8.19;
 
 import {SafeERC20} from "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
-import {IGuardian} from "../interfaces/IGuardian.sol";
+import {ICircuitBreaker} from "../interfaces/ICircuitBreaker.sol";
 import {Limiter, LiqChangeNode} from "../static/Structs.sol";
 import {LimiterLib, LimitStatus} from "../utils/LimiterLib.sol";
 
-contract Guardian is IGuardian {
+contract CircuitBreaker is ICircuitBreaker {
     using SafeERC20 for IERC20;
     using LimiterLib for Limiter;
 
@@ -22,7 +22,7 @@ contract Guardian is IGuardian {
      */
     mapping(address recipient => mapping(address token => uint256 amount)) public lockedFunds;
 
-    mapping(address account => bool guardActive) public isGuardedContract;
+    mapping(address account => bool protectionActive) public isProtectedContract;
 
     address public admin;
 
@@ -57,7 +57,7 @@ contract Guardian is IGuardian {
     //                           ERRORS                           //
     ////////////////////////////////////////////////////////////////
 
-    error NotAGuardedContract();
+    error NotAProtectedContract();
     error NotAdmin();
     error InvalidAdminAddress();
     error NoLockedFunds();
@@ -69,8 +69,8 @@ contract Guardian is IGuardian {
     //                         MODIFIERS                          //
     ////////////////////////////////////////////////////////////////
 
-    modifier onlyGuarded() {
-        if (!isGuardedContract[msg.sender]) revert NotAGuardedContract();
+    modifier onlyProtected() {
+        if (!isProtectedContract[msg.sender]) revert NotAProtectedContract();
         _;
     }
 
@@ -103,36 +103,40 @@ contract Guardian is IGuardian {
     //                         FUNCTIONS                          //
     ////////////////////////////////////////////////////////////////
 
-    function registerToken(address _token, uint256 _minLiqRetainedBps, uint256 _limitBeginThreshold)
-        external
-        onlyAdmin
-    {
+    function registerToken(
+        address _token,
+        uint256 _minLiqRetainedBps,
+        uint256 _limitBeginThreshold
+    ) external onlyAdmin {
         tokenLimiters[_token].init(_minLiqRetainedBps, _limitBeginThreshold);
         emit TokenRegistered(_token, _minLiqRetainedBps, _limitBeginThreshold);
     }
 
-    function updateTokenRateLimitParams(address _token, uint256 _minLiqRetainedBps, uint256 _limitBeginThreshold)
-        external
-        onlyAdmin
-    {
+    function updateTokenParams(
+        address _token,
+        uint256 _minLiqRetainedBps,
+        uint256 _limitBeginThreshold
+    ) external onlyAdmin {
         Limiter storage limiter = tokenLimiters[_token];
         limiter.updateParams(_minLiqRetainedBps, _limitBeginThreshold);
         limiter.sync(WITHDRAWAL_PERIOD);
     }
 
     /**
-     * @dev Give guarded contracts one function to call for convenience
+     * @dev Give protected contracts one function to call for convenience
      */
-    function recordInflow(address _token, uint256 _amount) external onlyGuarded {
+    function inflowHook(address _token, uint256 _amount) external onlyProtected {
         /// @dev uint256 could overflow into negative
         tokenLimiters[_token].recordChange(int256(_amount), WITHDRAWAL_PERIOD, TICK_LENGTH);
         emit TokenInflow(_token, _amount);
     }
 
-    function withdraw(address _token, uint256 _amount, address _recipient, bool _revertOnRateLimit)
-        external
-        onlyGuarded
-    {
+    function outflowHook(
+        address _token,
+        uint256 _amount,
+        address _recipient,
+        bool _revertOnRateLimit
+    ) external onlyProtected {
         Limiter storage limiter = tokenLimiters[_token];
         // Check if the token has enforced rate limited
         if (!limiter.initialized()) {
@@ -202,7 +206,7 @@ contract Guardian is IGuardian {
         emit AdminSet(_newAdmin);
     }
 
-    function removeRateLimit() external onlyAdmin {
+    function overrideRateLimit() external onlyAdmin {
         if (!isRateLimited) revert NotRateLimited();
         isRateLimited = false;
         // Allow the grace period to extend for the full withdrawal period to not trigger rate limit again
@@ -210,7 +214,7 @@ contract Guardian is IGuardian {
         gracePeriodEndTimestamp = lastRateLimitTimestamp + WITHDRAWAL_PERIOD;
     }
 
-    function removeExpiredRateLimit() external {
+    function overrideExpiredRateLimit() external {
         if (!isRateLimited) revert NotRateLimited();
         if (block.timestamp - lastRateLimitTimestamp < rateLimitCooldownPeriod) {
             revert CooldownPeriodNotReached();
@@ -219,23 +223,22 @@ contract Guardian is IGuardian {
         isRateLimited = false;
     }
 
-    function addGuardedContracts(address[] calldata _guardedContracts) external onlyAdmin {
-        for (uint256 i = 0; i < _guardedContracts.length; i++) {
-            isGuardedContract[_guardedContracts[i]] = true;
+    function addProtectedContracts(address[] calldata _ProtectedContracts) external onlyAdmin {
+        for (uint256 i = 0; i < _ProtectedContracts.length; i++) {
+            isProtectedContract[_ProtectedContracts[i]] = true;
         }
     }
 
-    function removeGuardedContracts(address[] calldata _guardedContracts) external onlyAdmin {
-        for (uint256 i = 0; i < _guardedContracts.length; i++) {
-            isGuardedContract[_guardedContracts[i]] = false;
+    function removeProtectedContracts(address[] calldata _ProtectedContracts) external onlyAdmin {
+        for (uint256 i = 0; i < _ProtectedContracts.length; i++) {
+            isProtectedContract[_ProtectedContracts[i]] = false;
         }
     }
 
-    function tokenLiquidityChanges(address _token, uint256 _tickTimestamp)
-        external
-        view
-        returns (uint256 nextTimestamp, int256 amount)
-    {
+    function tokenLiquidityChanges(
+        address _token,
+        uint256 _tickTimestamp
+    ) external view returns (uint256 nextTimestamp, int256 amount) {
         LiqChangeNode storage node = tokenLimiters[_token].listNodes[_tickTimestamp];
         nextTimestamp = node.nextTimestamp;
         amount = node.amount;
@@ -248,4 +251,6 @@ contract Guardian is IGuardian {
     function isInGracePeriod() public view returns (bool) {
         return block.timestamp <= gracePeriodEndTimestamp;
     }
+
+    function setGracePeriod(uint256 _gracePeriodEndTimestamp) external onlyAdmin {}
 }
