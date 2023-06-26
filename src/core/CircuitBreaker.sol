@@ -129,28 +129,28 @@ contract CircuitBreaker is ICircuitBreaker {
     /**
      * @dev Give protected contracts one function to call for convenience
      */
-    function inflowHook(address _token, uint256 _amount) external onlyProtected {
-        _inflowHook(_token, _amount);
+    function onTokenInflow(address _token, uint256 _amount) external onlyProtected {
+        _onTokenInflow(_token, _amount);
     }
 
-    function outflowHook(
+    function onTokenOutflow(
         address _token,
         uint256 _amount,
         address _recipient,
         bool _revertOnRateLimit
     ) external onlyProtected {
-        _outflowHook(_token, _amount, _recipient, _revertOnRateLimit);
+        _onTokenOutflow(_token, _amount, _recipient, _revertOnRateLimit);
     }
 
-    function inflowHookNative(uint256 _amount) external onlyProtected {
-        _inflowHook(NATIVE_ADDRESS_PROXY, _amount);
+    function onTokenInflowNative(uint256 _amount) external onlyProtected {
+        _onTokenInflow(NATIVE_ADDRESS_PROXY, _amount);
     }
 
-    function outflowHookNative(
+    function onTokenOutflowNative(
         address _recipient,
         bool _revertOnRateLimit
     ) external payable onlyProtected {
-        _outflowHook(NATIVE_ADDRESS_PROXY, msg.value, _recipient, _revertOnRateLimit);
+        _onTokenOutflow(NATIVE_ADDRESS_PROXY, msg.value, _recipient, _revertOnRateLimit);
     }
 
     /**
@@ -234,7 +234,7 @@ contract CircuitBreaker is ICircuitBreaker {
 
     function setGracePeriod(uint256 _gracePeriodEndTimestamp) external onlyAdmin {}
 
-    function _outflowHook(
+    function _onTokenOutflow(
         address _token,
         uint256 _amount,
         address _recipient,
@@ -280,7 +280,7 @@ contract CircuitBreaker is ICircuitBreaker {
         emit TokenWithdraw(_token, _recipient, _amount);
     }
 
-    function _inflowHook(address _token, uint256 _amount) internal {
+    function _onTokenInflow(address _token, uint256 _amount) internal {
         /// @dev uint256 could overflow into negative
         tokenLimiters[_token].recordChange(int256(_amount), WITHDRAWAL_PERIOD, TICK_LENGTH);
         emit TokenInflow(_token, _amount);

@@ -22,18 +22,18 @@ interface ICircuitBreaker {
         uint256 _minAmountToLimit
     ) external;
 
-    function inflowHook(address _token, uint256 _amount) external;
+    function onTokenInflow(address _token, uint256 _amount) external;
 
-    function outflowHook(
+    function onTokenOutflow(
         address _token,
         uint256 _amount,
         address _recipient,
         bool _revertOnRateLimit
     ) external;
 
-    function inflowHookNative(uint256 _amount) external;
+    function onTokenInflowNative(uint256 _amount) external;
 
-    function outflowHookNative(address _recipient, bool _revertOnRateLimit) external payable;
+    function onTokenOutflowNative(address _recipient, bool _revertOnRateLimit) external payable;
 
     function claimLockedFunds(address _token, address _recipient) external;
 

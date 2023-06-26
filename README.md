@@ -56,8 +56,8 @@ contract MockDeFiConsumer {
 
     error RateLimited();
 
-    function outflowHook(address token, uint256 amount) external {
-        defi.outflowHook(address token, uint256 amount);
+    function onTokenOutflow(address token, uint256 amount) external {
+        defi.onTokenOutflow(address token, uint256 amount);
         if(circuitBreaker.isRateLimited()){
             revert RateLimited()
         }
