@@ -11,6 +11,8 @@ contract CircuitBreakerTest is Test {
     MockToken internal token;
     MockToken internal secondToken;
     MockToken internal unlimitedToken;
+
+    address internal NATIVE_ADDRESS_PROXY = address(1);
     CircuitBreaker internal circuitBreaker;
     MockDeFiProtocol internal deFi;
 
@@ -32,6 +34,8 @@ contract CircuitBreakerTest is Test {
         vm.prank(admin);
         // Protect USDC with 70% max drawdown per 4 hours
         circuitBreaker.registerToken(address(token), 7000, 1000e18);
+        vm.prank(admin);
+        circuitBreaker.registerToken(NATIVE_ADDRESS_PROXY, 7000, 1000e18);
         vm.warp(1 hours);
     }
 
@@ -421,5 +425,47 @@ contract CircuitBreakerTest is Test {
         token.approve(address(deFi), amount);
         vm.prank(alice);
         deFi.depositNoCircuitBreaker(address(token), amount);
+    }
+
+    function testNativeDepositsFuzzed(uint256 amount) public {
+        // used to test compare gas costs of deposits
+        vm.deal(alice, amount);
+        vm.prank(alice);
+        deFi.depositNative{value: amount}();
+    }
+
+    function testNativeWithdrawlsShouldBeSuccessful() public {
+        vm.deal(alice, 10000e18);
+
+        vm.prank(alice);
+        deFi.depositNative{value: 100e18}();
+
+        vm.warp(1 hours);
+        vm.prank(alice);
+        deFi.withdrawalNative(60e18);
+        assertEq(circuitBreaker.isRateLimitBreeched(NATIVE_ADDRESS_PROXY), false);
+        (, , int256 liqTotal, int256 liqInPeriod, , ) = circuitBreaker.tokenLimiters(
+            NATIVE_ADDRESS_PROXY
+        );
+        assertEq(liqInPeriod, 40e18);
+        assertEq(liqTotal, 0);
+        assertEq(alice.balance, 9960e18);
+
+        // All the previous deposits are now out of the window and accounted for in the historacle
+        vm.warp(10 hours);
+        vm.prank(alice);
+        deFi.depositNative{value: 10e18}();
+        assertEq(circuitBreaker.isRateLimitBreeched(NATIVE_ADDRESS_PROXY), false);
+
+        uint256 tail;
+        uint256 head;
+        (, , liqTotal, liqInPeriod, head, tail) = circuitBreaker.tokenLimiters(
+            NATIVE_ADDRESS_PROXY
+        );
+        assertEq(liqInPeriod, 10e18);
+        assertEq(liqTotal, 40e18);
+
+        assertEq(head, block.timestamp);
+        assertEq(tail, block.timestamp);
     }
 }

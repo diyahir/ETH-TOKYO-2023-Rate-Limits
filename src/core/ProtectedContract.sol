@@ -19,7 +19,7 @@ contract ProtectedContract {
     }
 
     // Internal function to be used when tokens are deposited
-    // Transfers the tokens from sender to recipient and then calls the circuitBreaker's inflowHook
+    // Transfers the tokens from sender to recipient and then calls the circuitBreaker's onTokenInflow
     function cbInflowSafeTransferFrom(
         address _token,
         address _sender,
@@ -28,12 +28,12 @@ contract ProtectedContract {
     ) internal {
         // Transfer the tokens safely from sender to recipient
         IERC20(_token).safeTransferFrom(_sender, _recipient, _amount);
-        // Call the circuitBreaker's inflowHook
-        circuitBreaker.inflowHook(_token, _amount);
+        // Call the circuitBreaker's onTokenInflow
+        circuitBreaker.onTokenInflow(_token, _amount);
     }
 
     // Internal function to be used when tokens are withdrawn
-    // Transfers the tokens to the circuitBreaker and then calls the circuitBreaker's outflowHook
+    // Transfers the tokens to the circuitBreaker and then calls the circuitBreaker's onTokenOutflow
     function cbOutflowSafeTransfer(
         address _token,
         address _recipient,
@@ -42,7 +42,21 @@ contract ProtectedContract {
     ) internal {
         // Transfer the tokens safely to the circuitBreaker
         IERC20(_token).safeTransfer(address(circuitBreaker), _amount);
-        // Call the circuitBreaker's outflowHook
-        circuitBreaker.outflowHook(_token, _amount, _recipient, _revertOnRateLimit);
+        // Call the circuitBreaker's onTokenOutflow
+        circuitBreaker.onTokenOutflow(_token, _amount, _recipient, _revertOnRateLimit);
+    }
+
+    function cbInflowNative() internal {
+        // Transfer the tokens safely from sender to recipient
+        circuitBreaker.onTokenInflowNative(msg.value);
+    }
+
+    function cbOutflowNative(
+        address _recipient,
+        uint256 _amount,
+        bool _revertOnRateLimit
+    ) internal {
+        // Transfer the native tokens safely through the circuitBreaker
+        circuitBreaker.onTokenOutflowNative{value: _amount}(_recipient, _revertOnRateLimit);
     }
 }

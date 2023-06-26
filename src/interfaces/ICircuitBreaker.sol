@@ -22,14 +22,18 @@ interface ICircuitBreaker {
         uint256 _minAmountToLimit
     ) external;
 
-    function inflowHook(address _token, uint256 _amount) external;
+    function onTokenInflow(address _token, uint256 _amount) external;
 
-    function outflowHook(
+    function onTokenOutflow(
         address _token,
         uint256 _amount,
         address _recipient,
         bool _revertOnRateLimit
     ) external;
+
+    function onTokenInflowNative(uint256 _amount) external;
+
+    function onTokenOutflowNative(address _recipient, bool _revertOnRateLimit) external payable;
 
     function claimLockedFunds(address _token, address _recipient) external;
 
@@ -43,7 +47,7 @@ interface ICircuitBreaker {
 
     function removeProtectedContracts(address[] calldata _ProtectedContracts) external;
 
-    function setGracePeriod(uint256 _gracePeriodEndTimestamp) external;
+    function startGracePeriod(uint256 _gracePeriodEndTimestamp) external;
 
     /**
      *

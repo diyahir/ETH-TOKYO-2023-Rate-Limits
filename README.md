@@ -1,8 +1,8 @@
-# DeFi CircuitBreaker: Token rate-limits for your DeFi Protocol
+# DeFi Circuit Breaker: Token Rate-limits for your DeFi Protocol
 
 ## Features
 
-- Protocol Agnositic approach to token rate limiting
+- Protocol Agnositic approach to ERC20/Native rate-limiting
 - Performant Codebase
 - Multiple tokens supports with custom withdrawal rate limits for each token.
 - Records inflows/outflows of token and maintains a Historical running total of the protocol's token liquidity.
@@ -13,9 +13,10 @@
 
 There are easy points of integration that you must do to have your protocol circuitBreaker properly set up.
 
-1. Register tokens if applicable
-2. Add contracts to circuit breaker
-3. use 'ProtectedContract's internal functions to move funds out of the protocol (not needed for moving assets within your protocol's contracts)
+1. Instantiate Circuit Breaker contract with appropriate constructor params
+2. Register circuit breaker params for each desired token
+3. Add protected contracts to circuit breaker
+4. Enjoy enhanced safety
 
 #### Example CircuitBreaker Integration
 
@@ -55,8 +56,8 @@ contract MockDeFiConsumer {
 
     error RateLimited();
 
-    function outflowHook(address token, uint256 amount) external {
-        defi.outflowHook(address token, uint256 amount);
+    function onTokenOutflow(address token, uint256 amount) external {
+        defi.onTokenOutflow(address token, uint256 amount);
         if(circuitBreaker.isRateLimited()){
             revert RateLimited()
         }

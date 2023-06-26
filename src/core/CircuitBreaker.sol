@@ -34,6 +34,9 @@ contract CircuitBreaker is ICircuitBreaker {
 
     uint256 public gracePeriodEndTimestamp;
 
+    // Using address(1) as a proxy for native token (ETH, BNB, etc), address(0) could be problematic
+    address public immutable NATIVE_ADDRESS_PROXY = address(1);
+
     uint256 public immutable WITHDRAWAL_PERIOD;
 
     uint256 public immutable TICK_LENGTH;
@@ -64,6 +67,7 @@ contract CircuitBreaker is ICircuitBreaker {
     error RateLimited();
     error NotRateLimited();
     error CooldownPeriodNotReached();
+    error NativeTransferFailed();
 
     ////////////////////////////////////////////////////////////////
     //                         MODIFIERS                          //
@@ -125,69 +129,45 @@ contract CircuitBreaker is ICircuitBreaker {
     /**
      * @dev Give protected contracts one function to call for convenience
      */
-    function inflowHook(address _token, uint256 _amount) external onlyProtected {
-        /// @dev uint256 could overflow into negative
-        tokenLimiters[_token].recordChange(int256(_amount), WITHDRAWAL_PERIOD, TICK_LENGTH);
-        emit TokenInflow(_token, _amount);
+    function onTokenInflow(address _token, uint256 _amount) external onlyProtected {
+        _onTokenInflow(_token, _amount);
     }
 
-    function outflowHook(
+    function onTokenOutflow(
         address _token,
         uint256 _amount,
         address _recipient,
         bool _revertOnRateLimit
     ) external onlyProtected {
-        Limiter storage limiter = tokenLimiters[_token];
-        // Check if the token has enforced rate limited
-        if (!limiter.initialized()) {
-            // if it is not rate limited, just transfer the tokens
-            IERC20(_token).safeTransfer(_recipient, _amount);
-            return;
-        }
-        limiter.recordChange(-int256(_amount), WITHDRAWAL_PERIOD, TICK_LENGTH);
-        // Check if currently rate limited, if so, add to locked funds claimable when resolved
-        if (isRateLimited) {
-            if (_revertOnRateLimit) {
-                revert RateLimited();
-            }
-            lockedFunds[_recipient][_token] += _amount;
-            return;
-        }
+        _onTokenOutflow(_token, _amount, _recipient, _revertOnRateLimit);
+    }
 
-        // Check if rate limit is breeched after withdrawal and not in grace period
-        // (grace period allows for withdrawals to be made if rate limit is breeched but overriden)
-        if (limiter.status() == LimitStatus.Breeched && !isInGracePeriod()) {
-            if (_revertOnRateLimit) {
-                revert RateLimited();
-            }
-            // if it is, set rate limited to true
-            isRateLimited = true;
-            lastRateLimitTimestamp = block.timestamp;
-            // add to locked funds claimable when resolved
-            lockedFunds[_recipient][_token] += _amount;
+    function onTokenInflowNative(uint256 _amount) external onlyProtected {
+        _onTokenInflow(NATIVE_ADDRESS_PROXY, _amount);
+    }
 
-            emit TokenRateLimitBreached(_token, block.timestamp);
-
-            return;
-        }
-
-        // if everything is good, transfer the tokens
-        IERC20(_token).safeTransfer(_recipient, _amount);
-
-        emit TokenWithdraw(_token, _recipient, _amount);
+    function onTokenOutflowNative(
+        address _recipient,
+        bool _revertOnRateLimit
+    ) external payable onlyProtected {
+        _onTokenOutflow(NATIVE_ADDRESS_PROXY, msg.value, _recipient, _revertOnRateLimit);
     }
 
     /**
      * @notice Allow users to claim locked funds when rate limit is resolved
+     * use address(1) for native token claims
      */
+
     function claimLockedFunds(address _token, address _recipient) external {
         if (lockedFunds[_recipient][_token] == 0) revert NoLockedFunds();
         if (isRateLimited) revert RateLimited();
-        IERC20 erc20Token = IERC20(_token);
-        erc20Token.safeTransfer(_recipient, lockedFunds[_recipient][_token]);
+
+        uint256 amount = lockedFunds[_recipient][_token];
         lockedFunds[_recipient][_token] = 0;
 
         emit LockedFundsClaimed(_token, _recipient);
+
+        _safeTransferIncludingNative(_token, _recipient, amount);
     }
 
     /**
@@ -252,5 +232,70 @@ contract CircuitBreaker is ICircuitBreaker {
         return block.timestamp <= gracePeriodEndTimestamp;
     }
 
-    function setGracePeriod(uint256 _gracePeriodEndTimestamp) external onlyAdmin {}
+    function startGracePeriod(uint256 _gracePeriodEndTimestamp) external onlyAdmin {}
+
+    function _onTokenOutflow(
+        address _token,
+        uint256 _amount,
+        address _recipient,
+        bool _revertOnRateLimit
+    ) internal {
+        Limiter storage limiter = tokenLimiters[_token];
+        // Check if the token has enforced rate limited
+        if (!limiter.initialized()) {
+            // if it is not rate limited, just transfer the tokens
+            _safeTransferIncludingNative(_token, _recipient, _amount);
+            return;
+        }
+        limiter.recordChange(-int256(_amount), WITHDRAWAL_PERIOD, TICK_LENGTH);
+        // Check if currently rate limited, if so, add to locked funds claimable when resolved
+        if (isRateLimited) {
+            if (_revertOnRateLimit) {
+                revert RateLimited();
+            }
+            lockedFunds[_recipient][_token] += _amount;
+            return;
+        }
+
+        // Check if rate limit is breeched after withdrawal and not in grace period
+        // (grace period allows for withdrawals to be made if rate limit is breeched but overriden)
+        if (limiter.status() == LimitStatus.Breeched && !isInGracePeriod()) {
+            if (_revertOnRateLimit) {
+                revert RateLimited();
+            }
+            // if it is, set rate limited to true
+            isRateLimited = true;
+            lastRateLimitTimestamp = block.timestamp;
+            // add to locked funds claimable when resolved
+            lockedFunds[_recipient][_token] += _amount;
+
+            emit TokenRateLimitBreached(_token, block.timestamp);
+
+            return;
+        }
+
+        // if everything is good, transfer the tokens
+        _safeTransferIncludingNative(_token, _recipient, _amount);
+
+        emit TokenWithdraw(_token, _recipient, _amount);
+    }
+
+    function _onTokenInflow(address _token, uint256 _amount) internal {
+        /// @dev uint256 could overflow into negative
+        tokenLimiters[_token].recordChange(int256(_amount), WITHDRAWAL_PERIOD, TICK_LENGTH);
+        emit TokenInflow(_token, _amount);
+    }
+
+    function _safeTransferIncludingNative(
+        address _token,
+        address _recipient,
+        uint256 _amount
+    ) internal {
+        if (_token == NATIVE_ADDRESS_PROXY) {
+            (bool success, ) = _recipient.call{value: _amount}("");
+            if (!success) revert NativeTransferFailed();
+        } else {
+            IERC20(_token).safeTransfer(_recipient, _amount);
+        }
+    }
 }
