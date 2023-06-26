@@ -47,7 +47,7 @@ interface ICircuitBreaker {
 
     function removeProtectedContracts(address[] calldata _ProtectedContracts) external;
 
-    function setGracePeriod(uint256 _gracePeriodEndTimestamp) external;
+    function startGracePeriod(uint256 _gracePeriodEndTimestamp) external;
 
     /**
      *

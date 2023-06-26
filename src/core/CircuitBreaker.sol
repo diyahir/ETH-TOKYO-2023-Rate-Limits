@@ -232,7 +232,7 @@ contract CircuitBreaker is ICircuitBreaker {
         return block.timestamp <= gracePeriodEndTimestamp;
     }
 
-    function setGracePeriod(uint256 _gracePeriodEndTimestamp) external onlyAdmin {}
+    function startGracePeriod(uint256 _gracePeriodEndTimestamp) external onlyAdmin {}
 
     function _onTokenOutflow(
         address _token,
