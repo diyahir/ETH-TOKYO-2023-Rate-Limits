@@ -48,7 +48,7 @@ contract CircuitBreaker is ICircuitBreaker {
     /**
      * @notice Emitted when a token is registered
      */
-    event TokenRegistered(address indexed token, uint256 minKeepBps, uint256 limitBeginThreshold);
+    event TokenRegistered(address indexed token, uint256 metricThreshold, uint256 limitBeginThreshold);
     event TokenInflow(address indexed token, uint256 indexed amount);
     event TokenRateLimitBreached(address indexed token, uint256 timestamp);
     event TokenWithdraw(address indexed token, address indexed recipient, uint256 amount);
@@ -197,7 +197,7 @@ contract CircuitBreaker is ICircuitBreaker {
     function overrideExpiredRateLimit() external {
         if (!isRateLimited) revert NotRateLimited();
         if (block.timestamp - lastRateLimitTimestamp < rateLimitCooldownPeriod) {
-            revert CooldownPeriodNotReached();
+            revert ();
         }
 
         isRateLimited = false;
